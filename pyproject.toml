@@ -1,0 +1,163 @@
+[build-system]
+requires = ["setuptools>=80.9.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atomheart"
+version = "0.1.0"
+description = "chess environment"
+requires-python = ">=3.13"
+dependencies = [
+    "rich",
+    "valanga @ git+https://github.com/victorgabillon/valanga.git@main",
+    "chess",
+    "shakmaty_python_binding>=0.1.5",
+    "PyYAML",
+
+
+]
+
+[project.optional-dependencies]
+test = [
+    # Testing dependencies
+    "pytest>=8.4.1",
+    "coverage",
+    "pytest-cov>=6.0.0"
+]
+
+dev = [
+    # Development dependencies (includes test)
+    "tox>=4.30.2",
+    "types-PyYAML>=6.0.12.12",
+
+    # Linting & formatting
+    "ruff>=0.12.11",
+    "pylint>=3.3.8",
+    "black>=25.1.0",
+
+    # Type checking
+    "mypy>=1.18.1",
+    "pyright>=1.1.406",
+
+    # Building & publishing
+    "build",
+    "twine",
+
+    # Documentation
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints",
+
+    # Pre-commit hooks
+    "pre-commit"
+
+]
+
+
+[tool.pytest.ini_options]
+addopts = "--cov=atomheart"
+testpaths = [
+    "tests"
+]
+
+[tool.mypy]
+mypy_path = "."
+ignore_missing_imports = true
+show_error_codes = true
+warn_unreachable = true
+no_implicit_reexport = true
+
+# Disallow dynamic typing
+#disallow_any_unimported = true
+#disallow_any_expr = true
+#disallow_any_decorated = true
+#disallow_any_generics = true
+#disallow_any_explicit = true
+#disallow_subclassing_any = true
+
+# Disallow untyped definitions and calls
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+
+# None and optional handling
+no_implicit_optional = true
+
+# Configuring warnings
+warn_unused_ignores = true
+warn_no_return = true
+warn_return_any = true
+warn_redundant_casts = true
+
+# Misc things
+strict_equality = true
+
+# Config file
+warn_unused_configs = true
+
+
+
+[[tool.mypy.overrides]]
+module = [
+    "PySide6",
+]
+ignore_missing_imports = true
+follow_imports = 'skip'
+
+
+[[tool.mypy.overrides]]
+module = 'PySide6.*'
+follow_imports = 'skip'
+ignore_missing_imports = true
+
+
+[tool.mypy-PySide6]
+ignore_missing_imports = true
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+# Enable import sorting (alphabetical + group order)
+lint.select = ["I", "F", "E", "B", "TCH"]  # I = imports, F = pyflakes, E = pycodestyle, TCH = type-checking, B = black
+
+# Allow auto-fixing for imports and type-checking imports
+lint.fixable = ["I", "TCH", "F401"]
+
+# Ignore rules you don't care about
+lint.ignore = [ "E501"]
+
+# Optional: add your first-party package to extend the known group
+[tool.ruff.lint.per-file-ignores]
+# If needed, can add file-specific ignores
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+
+[tool.pylint]
+py-version = "3.13"
+extension-pkg-whitelist = ["PyQt5", "PySide6"]
+
+[tool.pylint.format]
+max-line-length = 88
+
+#[tool.pylint.messages_control]
+disable = ["C0301"]
+
+[tool.pylint.typecheck]
+# Optional: same as init-hook in .pylintrc
+init-hook = "import sys; sys.path.append('.')"
+
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+reportMissingImports = true
+reportUnusedImport = true
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportPrivateImportUsage = false
