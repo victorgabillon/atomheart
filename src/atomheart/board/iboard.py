@@ -299,7 +299,7 @@ class IBoard(Protocol):
         ...
 
     @property
-    def fast_representation(self) -> boardKey:
+    def tag(self) -> boardKey:
         """
         Returns a fast representation of the board.
 
