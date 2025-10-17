@@ -61,19 +61,14 @@ testpaths = [
 ]
 
 [tool.mypy]
-mypy_path = "."
+python_version = "3.13"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
 ignore_missing_imports = true
 show_error_codes = true
 warn_unreachable = true
 no_implicit_reexport = true
-
-# Disallow dynamic typing
-#disallow_any_unimported = true
-#disallow_any_expr = true
-#disallow_any_decorated = true
-#disallow_any_generics = true
-#disallow_any_explicit = true
-#disallow_subclassing_any = true
 
 # Disallow untyped definitions and calls
 disallow_untyped_calls = true
@@ -93,28 +88,16 @@ warn_redundant_casts = true
 
 # Misc things
 strict_equality = true
-
-# Config file
 warn_unused_configs = true
-
-
 
 [[tool.mypy.overrides]]
 module = [
     "PySide6",
+    "PySide6.*"
 ]
 ignore_missing_imports = true
 follow_imports = 'skip'
 
-
-[[tool.mypy.overrides]]
-module = 'PySide6.*'
-follow_imports = 'skip'
-ignore_missing_imports = true
-
-
-[tool.mypy-PySide6]
-ignore_missing_imports = true
 
 
 [tool.ruff]

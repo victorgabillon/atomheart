@@ -668,7 +668,6 @@ class BoardChi(IBoard):
         """
         return self.legal_moves_
 
-
     def piece_at(self, square: chess.Square) -> chess.Piece | None:
         """
         Returns the piece at the specified square on the chess board.
