@@ -76,6 +76,8 @@ class LegalMoveKeyGeneratorP(Protocol):
         ...
 
 
+
+
 def compute_key(
     pawns: int,
     knights: int,
@@ -340,6 +342,9 @@ class IBoard(Protocol):
 
     @property
     def legal_moves(self) -> LegalMoveKeyGeneratorP: ...
+
+    branch_keys = legal_moves # alias for compatibility with the tree search library that expect this name for content updates
+
 
     def number_of_pieces_on_the_board(self) -> int: ...
 
