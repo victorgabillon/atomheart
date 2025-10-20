@@ -3,12 +3,12 @@ Defines the IMove interface for chess moves.
 """
 
 from abc import abstractmethod
-from typing import Protocol
+from typing import Annotated, Protocol
 
 from .utils import moveUci
 
 # numbering scheme for actions in the node of the trees
-moveKey = int
+type moveKey = Annotated[int, "Move key identifier"]  # Now properly annotated
 
 
 class IMove(Protocol):

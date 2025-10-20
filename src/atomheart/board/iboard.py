@@ -27,7 +27,7 @@ boardKeyWithoutCounters = tuple[
 ]
 
 
-class LegalMoveKeyGeneratorP(Protocol):
+class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[moveKey], Protocol):
     """Protocol for a legal move generator that yields move keys."""
 
     all_generated_keys: list[moveKey] | None
@@ -42,7 +42,7 @@ class LegalMoveKeyGeneratorP(Protocol):
         """Returns the next legal move key."""
         ...
 
-    def more_than_one_move(self) -> bool:
+    def more_than_one(self) -> bool:
         """Checks if there is more than one legal move available.
 
         Returns:
@@ -341,6 +341,7 @@ class IBoard(Protocol):
     @property
     def legal_moves(self) -> LegalMoveKeyGeneratorP: ...
 
+    # to comply with anemone interface for Node Content (seems hacky but avoid to create another wrapper for now)
     @property
     def branch_keys(self) -> LegalMoveKeyGeneratorP:
         return self.legal_moves

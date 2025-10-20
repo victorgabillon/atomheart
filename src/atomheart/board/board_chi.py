@@ -142,7 +142,7 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         else:
             return self.all_generated_keys
 
-    def more_than_one_move(self) -> bool:
+    def more_than_one(self) -> bool:
         """Checks if there is more than one legal move available.
 
         Returns:

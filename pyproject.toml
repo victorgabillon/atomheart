@@ -144,3 +144,7 @@ reportUnusedImport = true
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportPrivateImportUsage = false
+
+
+[tool.setuptools.package-data]
+valanga = ["py.typed"]

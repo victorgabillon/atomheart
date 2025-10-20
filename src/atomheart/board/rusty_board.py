@@ -173,7 +173,7 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         else:
             return self.all_generated_keys
 
-    def more_than_one_move(self) -> bool:
+    def more_than_one(self) -> bool:
         if self.generated_moves is None:
             self.generated_moves = self.chess_rust_binding.legal_moves()
             self.number_moves = len(self.generated_moves)
