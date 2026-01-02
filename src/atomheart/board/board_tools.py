@@ -23,8 +23,7 @@ def convert_line(line: AnyStr, index: int) -> str:
 
     if count == 0:
         return str(line[0]) + convert_line(line[1:], index + 1)
-    else:
-        return str(count) + convert_line(line[count:], index + count)
+    return str(count) + convert_line(line[count:], index + count)
 
 
 def convert_to_fen(ascii_board: str | bytes) -> str:

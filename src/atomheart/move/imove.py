@@ -5,10 +5,10 @@ Defines the IMove interface for chess moves.
 from abc import abstractmethod
 from typing import Annotated, Protocol
 
-from .utils import moveUci
+from .utils import MoveUci
 
 # numbering scheme for actions in the node of the trees
-type moveKey = Annotated[int, "Move key identifier"]  # Now properly annotated
+type MoveKey = Annotated[int, "Move key identifier"]  # Now properly annotated
 
 
 class IMove(Protocol):
@@ -19,7 +19,7 @@ class IMove(Protocol):
     """
 
     @abstractmethod
-    def uci(self) -> moveUci:
+    def uci(self) -> MoveUci:
         """Returns the UCI string representation of the move.
         Returns: moveUci: The UCI string representation of the move.
         """

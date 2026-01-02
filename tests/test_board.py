@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING
 import chess
 import pytest
 
-from atomheart.board import IBoard, create_board, fen
+from atomheart.board import Fen, IBoard, create_board
 from atomheart.board.utils import FenPlusHistory
 
 if TYPE_CHECKING:
-    from atomheart.move import moveUci
+    from atomheart.move import MoveUci
 
 
 @pytest.mark.parametrize(("use_rusty_board"), (True, False))
@@ -31,7 +31,7 @@ def test_copy(use_rusty_board: bool) -> None:
 
 @pytest.mark.parametrize(("use_rusty_board"), (True, False))
 def test_move(use_rusty_board: bool) -> None:
-    examples: list[tuple[fen, moveUci, fen]] = [
+    examples: list[tuple[Fen, MoveUci, Fen]] = [
         (
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "e2e3",
@@ -55,9 +55,9 @@ def test_move(use_rusty_board: bool) -> None:
         ),
     ]
 
-    fen_original: fen
-    move_uci: moveUci
-    fen_next: fen
+    fen_original: Fen
+    move_uci: MoveUci
+    fen_next: Fen
 
     for fen_original, move_uci, fen_next in examples:
         board: IBoard = create_board(

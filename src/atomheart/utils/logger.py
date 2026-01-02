@@ -1,4 +1,6 @@
-# logger_module.py
+"""
+Logging utilities for the Atomheart project.
+"""
 
 import logging
 from contextlib import contextmanager

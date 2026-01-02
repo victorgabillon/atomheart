@@ -4,41 +4,45 @@ Interface for a chess board.
 
 import typing
 from dataclasses import asdict
-from typing import Any, Iterator, Protocol, Self
+from typing import Any, Iterator, Protocol, Self, Sequence
 
 import chess
 import valanga
 import yaml
 
 from atomheart.board.board_modification import BoardModificationP
-from atomheart.move import moveUci
-from atomheart.move.imove import moveKey
+from atomheart.move import MoveUci
+from atomheart.move.imove import MoveKey
 
-from .utils import FenPlusHistory, FenPlusMoveHistory, fen
+from .utils import Fen, FenPlusHistory, FenPlusMoveHistory
 
 # identifier that should be unique to any position
-boardKey = tuple[
+BoardKey = tuple[
     int, int, int, int, int, int, bool, int, int | None, int, int, int, int, int
 ]
 
 # identifier that removes the info (such as rounds) to count easily repeating position at difference round of the game
-boardKeyWithoutCounters = tuple[
+BoardKeyWithoutCounters = tuple[
     int, int, int, int, int, int, bool, int, int | None, int, int, int
 ]
 
 
-class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[moveKey], Protocol):
+class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
     """Protocol for a legal move generator that yields move keys."""
 
-    all_generated_keys: list[moveKey] | None
     # whether to sort the legal_moves by their respective uci for easy comparison of various implementations
     sort_legal_moves: bool = False
 
-    def __iter__(self) -> Iterator[moveKey]:
+    @property
+    def all_generated_keys(self) -> Sequence[MoveKey] | None:
+        """Returns a sequence of all generated move keys, or None if not available."""
+        ...
+
+    def __iter__(self) -> Iterator[MoveKey]:
         """Returns an iterator over the legal move keys."""
         ...
 
-    def __next__(self) -> moveKey:
+    def __next__(self) -> MoveKey:
         """Returns the next legal move key."""
         ...
 
@@ -50,14 +54,14 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[moveKey], Protocol):
         """
         ...
 
-    def get_all(self) -> list[moveKey]:
+    def get_all(self) -> Sequence[MoveKey]:
         """Returns a list of all legal move keys."""
         ...
 
-    def get_uci_from_move_key(self, move_key: moveKey) -> moveUci:
+    def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
         """Returns the UCI string corresponding to the given move key.
         Args:
-            move_key (moveKey): The move key to convert to UCI.
+            move_key (MoveKey): The move key to convert to UCI.
         Returns:
             moveUci: The UCI string corresponding to the given move key."""
         ...
@@ -71,7 +75,7 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[moveKey], Protocol):
         ...
 
     @property
-    def fen(self) -> fen:
+    def fen(self) -> Fen:
         """Returns the FEN string representation of the board."""
         ...
 
@@ -91,7 +95,7 @@ def compute_key(
     promoted: int,
     fullmove_number: int,
     halfmove_clock: int,
-) -> boardKey:
+) -> BoardKey:
     """
     Computes and returns a unique key representing the current state of the chess board.
 
@@ -102,7 +106,7 @@ def compute_key(
     Returns:
         str: A unique key representing the current state of the chess board.
     """
-    string: boardKey = (
+    string: BoardKey = (
         pawns,
         knights,
         bishops,
@@ -132,22 +136,22 @@ PieceMap = typing.Annotated[
 class IBoard(Protocol):
     """Interface for a chess board."""
 
-    fast_representation_: boardKey
+    fast_representation_: BoardKey
 
-    def get_uci_from_move_key(self, move_key: moveKey) -> moveUci:
+    def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
         """Returns the UCI string corresponding to the given move key.
         Args:
-            move_key (moveKey): The move key to convert to UCI.
+            move_key (MoveKey): The move key to convert to UCI.
         Returns:
             moveUci: The UCI string corresponding to the given move key."""
         return self.legal_moves.get_uci_from_move_key(move_key)
 
-    def get_move_key_from_uci(self, move_uci: moveUci) -> moveKey:
+    def get_move_key_from_uci(self, move_uci: MoveUci) -> MoveKey:
         """Returns the move key corresponding to the given UCI string.
         Args:
             move_uci (moveUci): The UCI string to convert to a move key.
         Returns:
-            moveKey: The move key corresponding to the given UCI string.
+            MoveKey: The move key corresponding to the given UCI string.
             Raises:
                 KeyError: If the UCI string is not found in the legal moves.
         """
@@ -163,16 +167,16 @@ class IBoard(Protocol):
             " legal moves / uci relation in boards object it seems"
         )
 
-    def play_move_key(self, move: moveKey) -> BoardModificationP | None:
+    def play_move_key(self, move: MoveKey) -> BoardModificationP | None:
         """Plays the move corresponding to the given move key.
         Args:
-            move (moveKey): The move key to play.
+            move (MoveKey): The move key to play.
         Returns:
             BoardModificationP | None: The result of the move, or None if the move is illegal.
         """
         ...
 
-    def play_move_uci(self, move_uci: moveUci) -> BoardModificationP | None:
+    def play_move_uci(self, move_uci: MoveUci) -> BoardModificationP | None:
         """Plays the move corresponding to the given UCI string.
         Args:
             move_uci (moveUci): The UCI string to play.
@@ -182,7 +186,7 @@ class IBoard(Protocol):
         ...
 
     @property
-    def fen(self) -> fen:
+    def fen(self) -> Fen:
         """Returns the FEN string representation of the board.
         Returns:
             fen: The FEN string representation of the board."""
@@ -191,7 +195,7 @@ class IBoard(Protocol):
     @property
     def move_history_stack(
         self,
-    ) -> list[moveUci]:
+    ) -> list[MoveUci]:
         """Returns the move history stack.
         Returns:
             list[moveUci]: The move history stack.
@@ -239,54 +243,90 @@ class IBoard(Protocol):
         ...
 
     @property
-    def pawns(self) -> chess.Bitboard: ...
+    def pawns(self) -> chess.Bitboard:
+        """Returns the bitboard representing the pawns on the board."""
+        ...
 
     @property
-    def knights(self) -> chess.Bitboard: ...
+    def knights(self) -> chess.Bitboard:
+        """Returns the bitboard representing the knights on the board."""
+        ...
 
     @property
-    def bishops(self) -> chess.Bitboard: ...
+    def bishops(self) -> chess.Bitboard:
+        """Returns the bitboard representing the bishops on the board."""
+        ...
 
     @property
-    def rooks(self) -> chess.Bitboard: ...
+    def rooks(self) -> chess.Bitboard:
+        """Returns the bitboard representing the rooks on the board."""
+        ...
 
     @property
-    def queens(self) -> chess.Bitboard: ...
+    def queens(self) -> chess.Bitboard:
+        """Returns the bitboard representing the queens on the board."""
+        ...
 
     @property
-    def kings(self) -> chess.Bitboard: ...
+    def kings(self) -> chess.Bitboard:
+        """Returns the bitboard representing the kings on the board."""
+        ...
 
     @property
-    def white(self) -> chess.Bitboard: ...
+    def white(self) -> chess.Bitboard:
+        """Returns the bitboard representing the white pieces on the board."""
+        ...
 
     @property
-    def black(self) -> chess.Bitboard: ...
+    def black(self) -> chess.Bitboard:
+        """Returns the bitboard representing the black pieces on the board."""
+        ...
 
     @property
-    def halfmove_clock(self) -> int: ...
+    def halfmove_clock(self) -> int:
+        """Returns the halfmove clock of the board."""
+        ...
 
     @property
-    def promoted(self) -> chess.Bitboard: ...
+    def promoted(self) -> chess.Bitboard:
+        """Returns the bitboard representing the promoted pieces on the board."""
+        ...
 
     @property
-    def fullmove_number(self) -> int: ...
+    def fullmove_number(self) -> int:
+        """Returns the fullmove number of the board."""
+        ...
 
     @property
-    def castling_rights(self) -> chess.Bitboard: ...
+    def castling_rights(self) -> chess.Bitboard:
+        """Returns the bitboard representing the castling rights on the board."""
+        ...
 
     @property
-    def occupied(self) -> chess.Bitboard: ...
+    def occupied(self) -> chess.Bitboard:
+        """Returns the bitboard representing all occupied squares on the board."""
+        ...
 
-    def occupied_color(self, color: chess.Color) -> chess.Bitboard: ...
+    def occupied_color(self, color: chess.Color) -> chess.Bitboard:
+        """Returns the bitboard representing the occupied squares for the given color."""
+        ...
 
-    def result(self, claim_draw: bool = False) -> str: ...
+    def result(self, claim_draw: bool = False) -> str:
+        """Returns the result of the game as a string."""
+        ...
 
-    def termination(self) -> chess.Termination | None: ...
+    def termination(self) -> chess.Termination | None:
+        """Returns the termination status of the game."""
+        ...
 
     def dump(self, file: Any) -> None:
+        """Dumps the current board state to a file in YAML format.
+        Args:
+            file (Any): The file object to write the board state to.
+        """
         # create minimal info for reconstruction that is the class FenPlusMoveHistory
 
-        current_fen: fen = self.fen
+        current_fen: Fen = self.fen
         fen_plus_moves: FenPlusMoveHistory = FenPlusMoveHistory(
             current_fen=current_fen, historical_moves=self.move_history_stack
         )
@@ -299,7 +339,7 @@ class IBoard(Protocol):
         ...
 
     @property
-    def tag(self) -> boardKey:
+    def tag(self) -> BoardKey:
         """
         Returns a fast representation of the board.
 
@@ -312,7 +352,7 @@ class IBoard(Protocol):
         return self.fast_representation_
 
     @property
-    def fast_representation_without_counters(self) -> boardKeyWithoutCounters:
+    def fast_representation_without_counters(self) -> BoardKeyWithoutCounters:
         """
         Returns a fast representation of the board.
 
@@ -325,37 +365,63 @@ class IBoard(Protocol):
         assert self.fast_representation_ is not None
         return self.fast_representation_[:-2]
 
-    def is_zeroing(self, move: moveKey) -> bool:
+    def is_zeroing(self, move: MoveKey) -> bool:
         """Check if a move is a zeroing move (i.e., checks if the given move is a capture or pawn move.
 
         Args:
-            move (moveKey): The move to check.
+            move (MoveKey): The move to check.
 
         Returns:
             bool: True if the move is a zeroing move, False otherwise.
         """
         ...
 
-    def is_attacked(self, a_color: chess.Color) -> bool: ...
+    def is_attacked(self, a_color: chess.Color) -> bool:
+        """Check if the given color is attacked.
+
+        Args:
+            a_color (chess.Color): The color to check.
+
+        Returns:
+            bool: True if the color is attacked, False otherwise.
+        """
+        ...
 
     @property
-    def legal_moves(self) -> LegalMoveKeyGeneratorP: ...
+    def legal_moves(self) -> LegalMoveKeyGeneratorP:
+        """Returns the legal moves generator."""
+        ...
 
     # to comply with anemone interface for Node Content (seems hacky but avoid to create another wrapper for now)
     @property
     def branch_keys(self) -> LegalMoveKeyGeneratorP:
+        """Returns the legal moves generator."""
         return self.legal_moves
 
-    def number_of_pieces_on_the_board(self) -> int: ...
+    def number_of_pieces_on_the_board(self) -> int:
+        """Returns the number of pieces currently on the board."""
+        ...
 
-    def piece_map(self) -> dict[chess.Square, tuple[chess.PieceType, chess.Color]]: ...
+    def piece_map(self) -> dict[chess.Square, tuple[chess.PieceType, chess.Color]]:
+        """Returns a mapping from squares to pieces on the board."""
+        ...
 
-    def has_kingside_castling_rights(self, color: chess.Color) -> bool: ...
+    def has_kingside_castling_rights(self, color: chess.Color) -> bool:
+        """Returns whether the given color has kingside castling rights."""
+        ...
 
-    def has_queenside_castling_rights(self, color: chess.Color) -> bool: ...
+    def has_queenside_castling_rights(self, color: chess.Color) -> bool:
+        """Returns whether the given color has queenside castling rights."""
+        ...
 
-    def print_chess_board(self) -> str: ...
+    def print_chess_board(self) -> str:
+        """Returns a string representation of the chess board."""
+        ...
 
-    def tell_result(self) -> None: ...
+    def tell_result(self) -> None:
+        """Prints the result of the game."""
+        ...
 
-    def into_fen_plus_history(self) -> FenPlusHistory: ...
+    def into_fen_plus_history(self) -> FenPlusHistory:
+        """Converts the current board state into a FenPlusHistory object."""
+        ...

@@ -10,13 +10,17 @@ import chess
 import shakmaty_python_binding
 
 from .board_chi import BoardChi, LegalMoveKeyGenerator
-from .iboard import IBoard, boardKey, compute_key
+from .iboard import BoardKey, IBoard, compute_key
 from .rusty_board import LegalMoveKeyGeneratorRust, RustyBoardChi
-from .utils import FenPlusHistory, fen
+from .utils import Fen, FenPlusHistory
 
 
 class BoardFactory(Protocol):
-    def __call__(self, fen_with_history: FenPlusHistory | None = None) -> IBoard: ...
+    """Protocol for a board factory."""
+
+    def __call__(self, fen_with_history: FenPlusHistory | None = None) -> IBoard:
+        """Create a board with an optional FEN string and history."""
+        ...
 
 
 def create_board_factory(
@@ -24,6 +28,7 @@ def create_board_factory(
     use_board_modification: bool = False,
     sort_legal_moves: bool = False,
 ) -> BoardFactory:
+    """Create a board factory based on the given parameters."""
     board_factory: BoardFactory
     if use_rust_boards:
         board_factory = partial(
@@ -71,7 +76,16 @@ def create_board_chi_from_pychess_board(
     use_board_modification: bool = False,
     sort_legal_moves: bool = False,
 ) -> BoardChi:
-    board_key_representation: boardKey = compute_key(
+    """
+    Create a chipiron chess board from a pychess board.
+    Args:
+        chess_board (chess.Board): The pychess board to convert.
+        use_board_modification (bool): whether to use the board modification
+        sort_legal_moves (bool): whether to sort legal moves
+    Returns:
+        BoardChi: The created chess board.
+    """
+    board_key_representation: BoardKey = compute_key(
         pawns=chess_board.pawns,
         knights=chess_board.knights,
         bishops=chess_board.bishops,
@@ -120,7 +134,7 @@ def create_board_chi(
 
     """
     chess_board: chess.Board
-    current_fen: fen
+    current_fen: Fen
 
     if fen_with_history is not None:
         current_fen = fen_with_history.current_fen
@@ -128,7 +142,7 @@ def create_board_chi(
         chess_board.move_stack = [
             chess.Move.from_uci(move) for move in fen_with_history.historical_moves
         ]
-        chess_board._stack = fen_with_history.historical_boards  # pyright: ignore[reportPrivateUsage]
+        chess_board._stack = fen_with_history.historical_boards  # pyright: ignore[reportPrivateUsage] #pylint: disable=protected-access
 
     else:
         chess_board = chess.Board()
@@ -159,7 +173,7 @@ def create_rust_board(
         RustyBoardChi: The created chess board.
 
     """
-    current_fen: fen
+    current_fen: Fen
     chess_rust_binding: shakmaty_python_binding.MyChess
 
     if fen_with_history is not None:
@@ -189,7 +203,7 @@ def create_rust_board(
     else:
         ep_square = ep_square_int
 
-    board_key_representation: boardKey = compute_key(
+    board_key_representation: BoardKey = compute_key(
         pawns=pawns,
         knights=knights,
         bishops=bishops,

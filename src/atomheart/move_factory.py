@@ -11,13 +11,17 @@ from atomheart.board.iboard import IBoard
 from atomheart.move.imove import IMove
 
 from .board import RustyBoardChi
-from .move import moveUci
+from .move import MoveUci
 
 
 class MoveFactory(Protocol):
     """Protocol for a move factory."""
 
-    def __call__(self, move_uci: moveUci, board: IBoard | None = None) -> IMove: ...
+    def __call__(self, move_uci: MoveUci, board: IBoard | None = None) -> IMove:
+        """
+        Create a move given its UCI string and an optional board.
+        """
+        ...
 
 
 def create_move_factory(
@@ -42,7 +46,7 @@ def create_move_factory(
 
 
 def create_rust_move(
-    move_uci: moveUci, board: RustyBoardChi | None = None
+    move_uci: MoveUci, board: RustyBoardChi | None = None
 ) -> shakmaty_python_binding.MyMove:
     """Creates a Rust-based move.
     Args:
@@ -56,7 +60,7 @@ def create_rust_move(
 
 
 def create_rust_move_test_2(
-    move_uci: moveUci, board: IBoard | None = None
+    move_uci: MoveUci, board: IBoard | None = None
 ) -> shakmaty_python_binding.MyMove:
     """Creates a Rust-based move for testing purposes.
     Args:
@@ -72,7 +76,7 @@ def create_rust_move_test_2(
     return binding_move
 
 
-def create_rust_move_test(move_uci: moveUci, board: IBoard | None = None) -> chess.Move:
+def create_rust_move_test(move_uci: MoveUci, board: IBoard | None = None) -> chess.Move:
     """Creates a Rust-based move for testing purposes.
     Args:
         move_uci (moveUci): The UCI string of the move.
@@ -84,7 +88,7 @@ def create_rust_move_test(move_uci: moveUci, board: IBoard | None = None) -> che
     return chess.Move.from_uci(move_uci)
 
 
-def create_move(move_uci: moveUci, board: IBoard | None = None) -> chess.Move:
+def create_move(move_uci: MoveUci, board: IBoard | None = None) -> chess.Move:  # pylint: disable=unused-argument
     """Creates a standard chess move.
     Args:
         move_uci (moveUci): The UCI string of the move.
