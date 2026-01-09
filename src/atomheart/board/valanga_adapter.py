@@ -1,7 +1,7 @@
 """Adapter that makes an IBoard look like a valanga.State."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Self, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 import valanga
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class ValangaChessState(valanga.State):
-    """Adapter that makes an IBoard look like a valanga.State."""
+    """Wrapper that makes an IBoard look like a valanga.State."""
 
     board: "IBoard"
 
@@ -37,3 +37,10 @@ class ValangaChessState(valanga.State):
 
     def step(self, branch_key: valanga.BranchKey) -> valanga.StateModifications | None:
         return self.board.play_move_key(cast("MoveKey", branch_key))
+
+    def __getattr__(self, name: str) -> Any:
+        """
+        Delegate unknown attributes/methods to the underlying board.
+        Called only if `name` wasn't found on the wrapper itself.
+        """
+        return getattr(self.board, name)
