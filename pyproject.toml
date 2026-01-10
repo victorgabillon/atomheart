@@ -25,6 +25,17 @@ test = [
     "pytest-cov>=6.0.0"
 ]
 
+lint = [
+  "ruff>=0.14.1",
+  "pylint>=3.3.8",
+]
+
+typecheck = [
+  "mypy>=1.18.2",
+  "pyright[nodejs]>=1.1.408",
+  "types-PyYAML>=6.0.12.12",
+]
+
 dev = [
     # Development dependencies (includes test)
     "tox>=4.30.2",
@@ -154,3 +165,70 @@ reportPrivateImportUsage = false
 
 [tool.setuptools.package-data]
 valanga = ["py.typed"]
+
+#################### TOX  ###################
+
+[tool.tox]
+min_version = "4.30.2"
+env_list = ["py313", "lint", "typecheck"]
+isolated_build = true
+
+[tool.tox.gh-actions]
+python = { "3.13" = ["py313", "lint", "typecheck"] }
+
+[tool.tox.env_run_base]
+base_python = ["python3.13"]
+
+[tool.tox.env.py313]
+extras = ["test"]
+commands = [["pytest", "{posargs}"]]
+
+[tool.tox.env.lint]
+description = "ruff + pylint (no package install, but runtime deps available)"
+package = "skip"
+deps = [
+  # runtime deps (match [project].dependencies)
+  "rich",
+  "valanga",
+  "chess",
+  "shakmaty_python_binding>=0.1.5",
+  "PyYAML",
+
+  # tool deps
+  "ruff>=0.14.1",
+  "pylint>=3.3.8",
+]
+set_env = { PYTHONPATH = "{toxinidir}/src" }
+commands = [
+  ["python", "-m", "ruff", "check", "src", "tests"],
+  ["python", "-m", "ruff", "format", "--check", "src", "tests"],
+  ["python", "-m", "pylint", "src/atomheart"],
+]
+
+
+[tool.tox.env.typecheck]
+description = "mypy + pyright (no package install, but runtime deps available)"
+package = "skip"
+deps = [
+  # runtime deps
+  "rich",
+  "valanga",
+  "chess",
+  "shakmaty_python_binding>=0.1.5",
+  "PyYAML",
+
+  # tool deps
+  "mypy>=1.18.2",
+  "pyright[nodejs]>=1.1.408",
+  "types-PyYAML>=6.0.12.12",
+]
+set_env = { MYPYPATH = "{toxinidir}/src" }
+commands = [
+  # run the same way you do locally
+  ["python", "-m", "mypy", "--strict", "src"],
+  ["python", "-m", "pyright", "src/atomheart"],
+]
+
+
+
+#################### END TOX  ###################
