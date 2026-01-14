@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "atomheart"
-version = "0.1.0"
+version = "0.1.1"
 description = "chess environment"
 requires-python = ">=3.13"
 dependencies = [
     "rich",
-    "valanga @ git+https://github.com/victorgabillon/valanga.git@main",
+    "valanga >=0.1.3",
     "chess",
     "shakmaty_python_binding>=0.1.5",
     "PyYAML",
@@ -25,6 +25,17 @@ test = [
     "pytest-cov>=6.0.0"
 ]
 
+lint = [
+  "ruff>=0.14.1",
+  "pylint>=3.3.8",
+]
+
+typecheck = [
+  "mypy>=1.18.2",
+  "pyright[nodejs]>=1.1.408",
+  "types-PyYAML>=6.0.12.12",
+]
+
 dev = [
     # Development dependencies (includes test)
     "tox>=4.30.2",
@@ -37,7 +48,7 @@ dev = [
 
     # Type checking
     "mypy>=1.18.2",
-    "pyright>=1.1.406",
+    "pyright[nodejs]>=1.1.408",
 
     # Building & publishing
     "build",
@@ -128,12 +139,18 @@ extension-pkg-whitelist = ["PyQt5", "PySide6"]
 [tool.pylint.format]
 max-line-length = 88
 
-#[tool.pylint.messages_control]
-disable = ["C0301"]
-
 [tool.pylint.typecheck]
 # Optional: same as init-hook in .pylintrc
 init-hook = "import sys; sys.path.append('.')"
+extension-pkg-allow-list = ["shakmaty_python_binding"]
+
+#[tool.pylint.messages_control]
+disable = [
+    "C0301",
+    "unnecessary-ellipsis",
+    "W0511",
+    "R0903","R0914","R0904","R0913","R0917","R0902",
+    ]
 
 
 [tool.pyright]
@@ -148,3 +165,67 @@ reportPrivateImportUsage = false
 
 [tool.setuptools.package-data]
 valanga = ["py.typed"]
+
+#################### TOX  ###################
+
+[tool.tox]
+min_version = "4.30.2"
+env_list = ["py313", "lint", "typecheck"]
+isolated_build = true
+
+[tool.tox.env_run_base]
+base_python = ["python3.13"]
+
+[tool.tox.env.py313]
+extras = ["test"]
+commands = [["pytest", "{posargs}"]]
+
+[tool.tox.env.lint]
+description = "ruff + pylint (no package install, but runtime deps available)"
+package = "skip"
+deps = [
+  # runtime deps (match [project].dependencies)
+  "rich",
+  "valanga",
+  "chess",
+  "shakmaty_python_binding>=0.1.5",
+  "PyYAML",
+
+  # tool deps
+  "ruff>=0.14.1",
+  "pylint>=3.3.8",
+]
+set_env = { PYTHONPATH = "{toxinidir}/src" }
+commands = [
+  ["python", "-m", "ruff", "check", "src", "tests"],
+  ["python", "-m", "ruff", "format", "--check", "src", "tests"],
+  ["python", "-m", "pylint", "src/atomheart"],
+]
+
+
+[tool.tox.env.typecheck]
+description = "mypy + pyright (no package install, but runtime deps available)"
+package = "skip"
+deps = [
+  # runtime deps
+  "rich",
+  "valanga",
+  "chess",
+  "shakmaty_python_binding>=0.1.5",
+  "PyYAML",
+
+  # tool deps
+  "mypy>=1.18.2",
+  "pyright[nodejs]>=1.1.408",
+  "types-PyYAML>=6.0.12.12",
+]
+set_env = { MYPYPATH = "{toxinidir}/src" }
+commands = [
+  # run the same way you do locally
+  ["python", "-m", "mypy", "--strict", "src"],
+  ["python", "-m", "pyright", "src/atomheart"],
+]
+
+
+
+#################### END TOX  ###################

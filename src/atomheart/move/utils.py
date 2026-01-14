@@ -1,3 +1,9 @@
-import typing
+"""
+Utilities for move UCI representation.
+"""
 
-moveUci = typing.Annotated[str, "a string representing a move uci"]
+from typing import Annotated, TypeAlias
+
+MoveUci: TypeAlias = Annotated[str, "a string representing a move uci"]
+
+HalfMove: TypeAlias = Annotated[int, "an integer representing a half move"]

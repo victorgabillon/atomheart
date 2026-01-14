@@ -3,7 +3,7 @@ Module that contains the BoardChi class that wraps the chess.Board class from th
 """
 
 import typing
-from typing import Iterator, Self
+from typing import Iterator, Self, Sequence
 
 import chess
 from chess import Outcome, _BoardState  # pyright: ignore[reportPrivateUsage]
@@ -15,24 +15,28 @@ from atomheart.board.board_modification import (
     PieceInSquare,
     compute_modifications,
 )
-from atomheart.move import moveUci
-from atomheart.move.imove import moveKey
+from atomheart.move import MoveUci
+from atomheart.move.imove import MoveKey
 from atomheart.utils.logger import chipiron_logger
 
-from .iboard import IBoard, LegalMoveKeyGeneratorP, boardKey, compute_key
-from .utils import FenPlusHistory, fen
+from .iboard import BoardKey, IBoard, LegalMoveKeyGeneratorP, compute_key
+from .utils import Fen, FenPlusHistory
 
 
 class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
     """Generates legal move keys for a chess board."""
 
-    generated_moves: dict[moveKey, chess.Move]
-    all_generated_keys: list[moveKey] | None
+    generated_moves: dict[MoveKey, chess.Move]
+    all_generated_keys_: list[MoveKey] | None
 
     # whether to sort the legal_moves by their respective uci for easy comparison of various implementations
     sort_legal_moves: bool = False
 
     chess_board: chess.Board
+
+    @property
+    def all_generated_keys(self) -> Sequence[MoveKey] | None:
+        return self.all_generated_keys_
 
     def __init__(self, chess_board: chess.Board, sort_legal_moves: bool) -> None:
         """Initializes the LegalMoveKeyGenerator.
@@ -46,19 +50,19 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         self.generated_moves = {}
         self.sort_legal_moves = sort_legal_moves
         self.count = 0
-        self.all_generated_keys = None
+        self.all_generated_keys_ = None
 
-    def get_uci_from_move_key(self, move_key: moveKey) -> moveUci:
+    def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
         """Returns the UCI string corresponding to the given move key.
         Args:
-            move_key (moveKey): The move key to convert to UCI.
+            move_key (MoveKey): The move key to convert to UCI.
         Returns:
             moveUci: The UCI string corresponding to the given move key."""
         chess_move: chess.Move = self.generated_moves[move_key]
         return chess_move.uci()
 
     @property
-    def fen(self) -> fen:
+    def fen(self) -> Fen:
         """Returns the FEN string of the current chess board."""
         return self.chess_board.fen()
 
@@ -69,23 +73,23 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
             str: A string representation of the legal move key generator.
         """
         the_string: str = "Legals Moves: "
-        ucis: list[moveUci] = [
+        ucis: list[MoveUci] = [
             chess_move.uci() for chess_move in self.generated_moves.values()
         ]
-        keys: list[moveKey] = [move_key for move_key in self.generated_moves.keys()]
+        keys: list[MoveKey] = list(self.generated_moves.keys())
 
         the_string = the_string + f"Generated ucis {ucis}"
         the_string = the_string + f" and generated keys {keys}"
 
         return the_string
 
-    def __iter__(self) -> Iterator[moveKey]:
+    def __iter__(self) -> Iterator[MoveKey]:
         """Returns an iterator over the legal move keys."""
         self.it = self.chess_board.generate_legal_moves()
         self.count = 0
         return self
 
-    def __next__(self) -> moveKey:
+    def __next__(self) -> MoveKey:
         """Returns the next legal move key."""
         new_move: chess.Move = self.it.__next__()
         move_key_ = self.count
@@ -96,20 +100,30 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
     def copy(
         self, copied_chess_board: chess.Board | None = None
     ) -> "LegalMoveKeyGenerator":
-        """Returns a copy of the LegalMoveKeyGenerator."""
+        """Creates a copy of the LegalMoveKeyGenerator.
+        Args:
+            copied_chess_board (chess.Board | None, optional): The chess board to use for the copy.
+                If None, the current chess board is used. Defaults to None.
+        Returns:
+            LegalMoveKeyGenerator: A copy of the LegalMoveKeyGenerator.
+        """
         if copied_chess_board is None:
             copied_chess_board_ = self.chess_board
         else:
             copied_chess_board_ = copied_chess_board
+
         legal_move_copy = LegalMoveKeyGenerator(
             chess_board=copied_chess_board_, sort_legal_moves=self.sort_legal_moves
         )
 
         legal_move_copy.generated_moves = self.generated_moves.copy()
-        if self.all_generated_keys is not None:
-            legal_move_copy.all_generated_keys = self.all_generated_keys.copy()
+
+        if self.all_generated_keys_ is not None:
+            # works for any Sequence (list/tuple/etc)
+            legal_move_copy.all_generated_keys_ = self.all_generated_keys_.copy()
         else:
-            legal_move_copy.all_generated_keys = None
+            legal_move_copy.all_generated_keys_ = None
+
         legal_move_copy.count = self.count
         return legal_move_copy
 
@@ -118,7 +132,7 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         self.it = self.chess_board.generate_legal_moves()
         self.generated_moves = {}
         self.count = 0
-        self.all_generated_keys = None
+        self.all_generated_keys_ = None
 
     def copy_with_reset(self) -> Self:
         """Returns a copy of the LegalMoveKeyGenerator with the iterator reset."""
@@ -127,20 +141,17 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         )
         return legal_move_copy
 
-    def get_all(self) -> list[moveKey]:
-        """Returns a list of all generated move keys."""
+    def get_all(self) -> list[MoveKey]:
         if self.all_generated_keys is None:
-            list_keys: list[moveKey]
             if self.sort_legal_moves:
                 list_keys = sorted(
                     list(self), key=lambda i: self.generated_moves[i].uci()
                 )
             else:
                 list_keys = list(self)
-            self.all_generated_keys = list_keys
+            self.all_generated_keys_ = list_keys
             return list_keys
-        else:
-            return self.all_generated_keys
+        return list(self.all_generated_keys)
 
     def more_than_one(self) -> bool:
         """Checks if there is more than one legal move available.
@@ -167,7 +178,7 @@ class BoardChi(IBoard):
     chess_board: chess.Board
     compute_board_modification: bool
     legal_moves_: LegalMoveKeyGenerator
-    fast_representation_: boardKey
+    fast_representation_: BoardKey
 
     # whether to sort the legal_moves by their respective uci for easy comparison of various implementations
     sort_legal_moves: bool
@@ -176,7 +187,7 @@ class BoardChi(IBoard):
         self,
         chess_board: chess.Board,
         compute_board_modification: bool,
-        fast_representation_: boardKey,
+        fast_representation_: BoardKey,
         legal_moves_: LegalMoveKeyGenerator,
     ) -> None:
         """
@@ -267,7 +278,7 @@ class BoardChi(IBoard):
             self.legal_moves_.copy_with_reset()
         )  # the legals moves needs to be recomputed as the board has changed
 
-        fast_representation: boardKey = compute_key(
+        fast_representation: BoardKey = compute_key(
             pawns=self.chess_board.pawns,
             knights=self.chess_board.knights,
             bishops=self.chess_board.bishops,
@@ -286,7 +297,7 @@ class BoardChi(IBoard):
         self.fast_representation_ = fast_representation
         return board_modifications
 
-    def play_move_uci(self, move_uci: moveUci) -> BoardModificationP | None:
+    def play_move_uci(self, move_uci: MoveUci) -> BoardModificationP | None:
         """Plays a move in UCI format.
 
         Args:
@@ -300,11 +311,11 @@ class BoardChi(IBoard):
         return self.play_move(move=chess_move)
 
     # todo look like this function might move to iboard when the dust settle
-    def play_move_key(self, move: moveKey) -> BoardModificationP | None:
+    def play_move_key(self, move: MoveKey) -> BoardModificationP | None:
         """Plays a move using its key.
 
         Args:
-            move (moveKey): The key of the move to play.
+            move (MoveKey): The key of the move to play.
 
         Returns:
             BoardModificationP | None: The board modification resulting from the move, or None if the move is invalid.
@@ -327,7 +338,7 @@ class BoardChi(IBoard):
     @typing.no_type_check
     def push_and_return_modification(
         self, move: chess.Move
-    ) -> BoardModification | None:
+    ) -> BoardModification | None:  # pylint: disable=all
         """
         Mostly reuse the push function of the chess library but records the modifications to the bitboard so that
         we can do the same with other parallel representations such as tensor in pytorch
@@ -650,7 +661,7 @@ class BoardChi(IBoard):
         return Color(self.chess_board.turn)
 
     @property
-    def fen(self) -> fen:
+    def fen(self) -> Fen:
         """
         Returns the Forsyth-Edwards Notation (FEN) representation of the chess board.
 
@@ -801,7 +812,7 @@ class BoardChi(IBoard):
         return self.chess_board.result(claim_draw=claim_draw)
 
     @property
-    def move_history_stack(self) -> list[moveUci]:
+    def move_history_stack(self) -> list[MoveUci]:
         """Get the history of moves made in the game.
 
         Returns:
@@ -956,11 +967,11 @@ class BoardChi(IBoard):
         """
         return self.chess_board.ep_square
 
-    def is_zeroing(self, move: moveKey) -> bool:
+    def is_zeroing(self, move: MoveKey) -> bool:
         """Check if a move is a zeroing move (i.e., checks if the given move is a capture or pawn move.
 
         Args:
-            move (moveKey): The move to check.
+            move (MoveKey): The move to check.
 
         Returns:
             bool: True if the move is a zeroing move, False otherwise.

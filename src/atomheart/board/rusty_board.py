@@ -1,6 +1,11 @@
+"""
+Module: rusty_board
+Defines a Rust-based chess board implementation using shakmaty_python_binding.
+"""
+
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Any, Iterator, Self, no_type_check
+from typing import Any, Iterator, Self, Sequence, no_type_check
 
 import chess
 import shakmaty_python_binding
@@ -10,17 +15,17 @@ from atomheart.board.board_modification import (
     BoardModificationP,
     BoardModificationRust,
 )
-from atomheart.move import moveUci
-from atomheart.move.imove import moveKey
+from atomheart.move.imove import MoveKey
+from atomheart.move.utils import MoveUci
 
 from .iboard import (
+    BoardKey,
+    BoardKeyWithoutCounters,
     IBoard,
     LegalMoveKeyGeneratorP,
-    boardKey,
-    boardKeyWithoutCounters,
     compute_key,
 )
-from .utils import FenPlusHistory, fen
+from .utils import Fen, FenPlusHistory
 
 
 class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
@@ -29,14 +34,18 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
     # whether to sort the legal_moves by their respective uci for easy comparison of various implementations
     sort_legal_moves: bool
 
-    all_generated_keys: list[moveKey] | None
+    all_generated_keys_: list[MoveKey] | None
 
     chess_rust_binding: shakmaty_python_binding.MyChess
 
-    def get_uci_from_move_key(self, move_key: moveKey) -> moveUci:
+    @property
+    def all_generated_keys(self) -> Sequence[MoveKey] | None:
+        return self.all_generated_keys_
+
+    def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
         """Returns the UCI string corresponding to the given move key.
         Args:
-            move_key (moveKey): The move key to convert to UCI.
+            move_key (MoveKey): The move key to convert to UCI.
         Returns:
             moveUci: The UCI string corresponding to the given move key."""
         assert self.generated_moves is not None
@@ -61,35 +70,38 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         if generated_moves is not None:
             self.number_moves = len(generated_moves)
             self.it: Iterator[int] = iter(range(self.number_moves))
-            self.all_generated_keys = list(range(self.number_moves))
+            self.all_generated_keys_ = list(range(self.number_moves))
             if sort_legal_moves:
 
-                def f(i: int) -> moveUci:
+                def f(i: int) -> MoveUci:
                     assert self.generated_moves is not None
                     return self.generated_moves[i].uci()
 
-                self.all_generated_keys = sorted(
+                self.all_generated_keys_ = sorted(
                     list(range(self.number_moves)),
                     # key=lambda i: self.generated_moves[i].uci()
                     key=f,
                 )
             else:
-                self.all_generated_keys = list(range(self.number_moves))
+                self.all_generated_keys_ = list(range(self.number_moves))
         else:
-            self.all_generated_keys = None
+            self.all_generated_keys_ = None
         self.sort_legal_moves = sort_legal_moves
 
     @property
-    def fen(self) -> fen:
+    def fen(self) -> Fen:
+        """Returns the FEN string of the current chess position."""
         return self.chess_rust_binding.fen()
 
     def reset(self, generated_moves: list[shakmaty_python_binding.MyMove]) -> None:
+        """Resets the legal move generator with a new list of generated moves."""
         self.generated_moves = generated_moves
         self.number_moves = len(generated_moves)
         self.it = iter(range(self.number_moves))
-        self.all_generated_keys = list(range(self.number_moves))
+        self.all_generated_keys_ = list(range(self.number_moves))
 
     def copy_with_reset(self) -> "LegalMoveKeyGeneratorRust":
+        """Creates a copy of the legal move generator with reset state."""
         legal_move_copy = LegalMoveKeyGeneratorRust(
             chess_rust_binding=self.chess_rust_binding,
             generated_moves=None,
@@ -100,16 +112,18 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
     def set_legal_moves(
         self, generated_moves: list[shakmaty_python_binding.MyMove]
     ) -> None:
+        """Sets the legal moves for the generator."""
         self.generated_moves = generated_moves
         self.number_moves = len(generated_moves)
 
-    def __iter__(self) -> Iterator[moveKey]:
+    def __iter__(self) -> Iterator[MoveKey]:
+        """Returns an iterator over the legal move keys."""
         if self.generated_moves is None:
             self.generated_moves = self.chess_rust_binding.legal_moves()
         if self.sort_legal_moves:
             assert self.generated_moves is not None
 
-            def f(i: int) -> moveUci:
+            def f(i: int) -> MoveUci:
                 assert self.generated_moves is not None
                 return self.generated_moves[i].uci()
 
@@ -124,12 +138,19 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
             self.it = iter(range(self.number_moves))
         return self
 
-    def __next__(self) -> moveKey:
+    def __next__(self) -> MoveKey:
+        """Returns the next legal move key in the iteration."""
         return self.it.__next__()
 
     def copy(
         self, copied_chess_rust_binding: shakmaty_python_binding.MyChess | None = None
     ) -> "LegalMoveKeyGeneratorRust":
+        """Creates a copy of the legal move generator.
+        Args:
+            copied_chess_rust_binding (shakmaty_python_binding.MyChess | None, optional): The Rust chess binding to use in the copy. Defaults to None.
+        Returns:
+            LegalMoveKeyGeneratorRust: A copy of the legal move generator.
+        """
         if copied_chess_rust_binding is None:
             copied_chess_rust_binding_ = self.chess_rust_binding
         else:
@@ -143,22 +164,26 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
             ),
             sort_legal_moves=self.sort_legal_moves,
         )
-        if self.all_generated_keys is not None:
-            legal_move_copy.all_generated_keys = self.all_generated_keys.copy()
+        if self.all_generated_keys_ is not None:
+            legal_move_copy.all_generated_keys_ = self.all_generated_keys_.copy()
         else:
-            legal_move_copy.all_generated_keys = legal_move_copy.all_generated_keys
+            legal_move_copy.all_generated_keys_ = legal_move_copy.all_generated_keys_
         return legal_move_copy
 
-    def get_all(self) -> list[moveKey]:
+    def get_all(self) -> Sequence[MoveKey]:
+        """Returns a sequence of all legal move keys.
+        Returns:
+            Sequence[MoveKey]: A sequence of all legal move keys.
+        """
         if self.generated_moves is None:
             self.generated_moves = self.chess_rust_binding.legal_moves()
             self.number_moves = len(self.generated_moves)
-            self.all_generated_keys = None
+            self.all_generated_keys_ = None
 
-        if self.all_generated_keys is None:
+        if self.all_generated_keys_ is None:
             if self.sort_legal_moves:
 
-                def f(i: int) -> moveUci:
+                def f(i: int) -> MoveUci:
                     assert self.generated_moves is not None
                     return self.generated_moves[i].uci()
 
@@ -168,20 +193,22 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
                     key=f,
                 )
                 return s
-            else:
-                return list(range(self.number_moves))
-        else:
-            return self.all_generated_keys
+            return list(range(self.number_moves))
+        return self.all_generated_keys_
 
     def more_than_one(self) -> bool:
         if self.generated_moves is None:
             self.generated_moves = self.chess_rust_binding.legal_moves()
             self.number_moves = len(self.generated_moves)
-            self.all_generated_keys = None
+            self.all_generated_keys_ = None
         return len(self.generated_moves) > 0
 
 
 # todo implement rewind (and a test for it)
+
+
+def _move_stack_factory() -> list[MoveUci]:
+    return []
 
 
 @dataclass
@@ -202,9 +229,9 @@ class RustyBoardChi(IBoard):
 
     # to count the number of occurrence of each board to be able to compute
     # three-fold repetition as shakmaty does not do it atm
-    rep_to_count: Counter[boardKeyWithoutCounters]
+    rep_to_count: Counter[BoardKeyWithoutCounters]
 
-    fast_representation_: boardKey
+    fast_representation_: BoardKey
 
     # storing the info here for fast access as it seems calls to rust bingings can be costy
     pawns_: int
@@ -223,7 +250,8 @@ class RustyBoardChi(IBoard):
     legal_moves_: LegalMoveKeyGeneratorRust
 
     # the move history is kept here because shakmaty_python_binding.MyChess does not have a move stack at the moment
-    move_stack: list[moveUci] = field(default_factory=lambda: list[moveUci]())
+    # move_stack: list[MoveUci] = field(default_factory=lambda: list[MoveUci]())
+    move_stack: list[MoveUci] = field(default_factory=_move_stack_factory)
 
     # the board history is kept here because shakmaty_python_binding.MyChess does not have a board stack at the moment
     # board_stack: list[chess._BoardState] = field(default_factory=list)
@@ -241,6 +269,7 @@ class RustyBoardChi(IBoard):
         return self.fen
 
     def play_min_2(self, move: shakmaty_python_binding.MyMove) -> None:
+        """Plays a move on the board without returning any modifications."""
         # _str, ply, turn, is_game_over = self.chess_.play_and_return(move)
         (
             self.castling_rights_,
@@ -263,6 +292,7 @@ class RustyBoardChi(IBoard):
             self.ep_square_ = ep_square_int
 
     def play_min_3(self, move: shakmaty_python_binding.MyMove) -> BoardModificationRust:
+        """Plays a move on the board and returns the board modifications."""
         (
             (
                 self.castling_rights_,
@@ -295,6 +325,13 @@ class RustyBoardChi(IBoard):
         appearances: set[tuple[int, int, int]],
         removals: set[tuple[int, int, int]],
     ) -> BoardModificationRust:
+        """Converts appearances and removals into a BoardModificationRust object.
+        Args:
+            appearances (set[tuple[int, int, int]]): The set of appearances.
+            removals (set[tuple[int, int, int]]): The set of removals.
+        Returns:
+            BoardModificationRust: The board modification object.
+        """
         board_modifications: BoardModificationRust = BoardModificationRust(
             appearances_=appearances, removals_=removals
         )
@@ -319,48 +356,7 @@ class RustyBoardChi(IBoard):
         board_modifications: BoardModificationRust | None = None
 
         if self.compute_board_modification:
-            if True:
-                board_modifications = self.play_min_3(move)
-
-            # else:
-            #     previous_pawns = self.pawns_
-            #     previous_kings = self.kings_
-            #     previous_queens = self.queens_
-            #     previous_rooks = self.rooks_
-            #     previous_bishops = self.bishops_
-            #     previous_knights = self.knights_
-            #     previous_occupied_white = self.white_
-            #     previous_occupied_black = self.black_
-            #
-            #     self.play_min_2(move)
-            #
-            #     new_pawns = self.pawns_
-            #     new_kings = self.kings_
-            #     new_queens = self.queens_
-            #     new_rooks = self.rooks_
-            #     new_bishops = self.bishops_
-            #     new_knights = self.knights_
-            #     new_occupied_white = self.white_
-            #     new_occupied_black = self.black_
-            #
-            #     board_modifications = compute_modifications(
-            #         previous_bishops=previous_bishops,
-            #         previous_pawns=previous_pawns,
-            #         previous_kings=previous_kings,
-            #         previous_knights=previous_knights,
-            #         previous_queens=previous_queens,
-            #         previous_occupied_white=previous_occupied_white,
-            #         previous_rooks=previous_rooks,
-            #         previous_occupied_black=previous_occupied_black,
-            #         new_kings=new_kings,
-            #         new_bishops=new_bishops,
-            #         new_pawns=new_pawns,
-            #         new_queens=new_queens,
-            #         new_rooks=new_rooks,
-            #         new_knights=new_knights,
-            #         new_occupied_black=new_occupied_black,
-            #         new_occupied_white=new_occupied_white
-            #     )
+            board_modifications = self.play_min_3(move)
         else:
             self.play_min_2(move)
 
@@ -369,7 +365,7 @@ class RustyBoardChi(IBoard):
             self.legal_moves_.copy_with_reset()
         )  # the legals moves needs to be recomputed as the board has changed
 
-        fast_representation: boardKey = compute_key(
+        fast_representation: BoardKey = compute_key(
             pawns=self.pawns_,
             knights=self.knights_,
             bishops=self.bishops_,
@@ -392,14 +388,14 @@ class RustyBoardChi(IBoard):
 
         return board_modifications
 
-    def play_move_uci(self, move_uci: moveUci) -> BoardModificationP | None:
+    def play_move_uci(self, move_uci: MoveUci) -> BoardModificationP | None:
         chess_move: shakmaty_python_binding.MyMove = shakmaty_python_binding.MyMove(
             uci=move_uci, my_chess=self.chess_
         )
         return self.play_move(move=chess_move)
 
     # todo look like this function might move to iboard when the dust settle
-    def play_move_key(self, move: moveKey) -> BoardModificationP | None:
+    def play_move_key(self, move: MoveKey) -> BoardModificationP | None:
         assert self.legal_moves_.generated_moves is not None
         my_move: shakmaty_python_binding.MyMove = self.legal_moves_.generated_moves[
             move
@@ -435,7 +431,7 @@ class RustyBoardChi(IBoard):
         Returns:
             bool: True if the game is over, False otherwise.
         """
-        claim_draw: bool = True if len(self.move_stack) >= 5 else False
+        claim_draw: bool = len(self.move_stack) >= 5
         three_fold_repetition: bool = (
             max(self.rep_to_count.values()) > 2 if claim_draw else False
         )
@@ -513,7 +509,7 @@ class RustyBoardChi(IBoard):
         return self.chess_.number_of_pieces_on_the_board()
 
     @property
-    def fen(self) -> fen:
+    def fen(self) -> Fen:
         """
         Returns the Forsyth-Edwards Notation (FEN) representation of the chess board.
 
@@ -583,7 +579,7 @@ class RustyBoardChi(IBoard):
     def tell_result(self) -> None: ...
 
     @property
-    def move_history_stack(self) -> list[moveUci]:
+    def move_history_stack(self) -> list[MoveUci]:
         return self.move_stack
 
     # @property
@@ -651,15 +647,14 @@ class RustyBoardChi(IBoard):
         return self.chess_.occupied()
 
     def result(self, claim_draw: bool = False) -> str:
-        claim_draw_: bool = True if len(self.move_stack) >= 5 and claim_draw else False
+        claim_draw_: bool = len(self.move_stack) >= 5 and claim_draw
         three_fold_repetition: bool = (
             max(self.rep_to_count.values()) > 2 if claim_draw_ else False
         )
 
         if three_fold_repetition:
             return "1/2-1/2"
-        else:
-            return self.chess_.result()
+        return self.chess_.result()
 
     @property
     def castling_rights(self) -> chess.Bitboard:
@@ -672,8 +667,7 @@ class RustyBoardChi(IBoard):
     def occupied_color(self, color: chess.Color) -> chess.Bitboard:
         if color == chess.WHITE:
             return self.chess_.white()
-        else:
-            return self.chess_.black()
+        return self.chess_.black()
 
     @property
     def halfmove_clock(self) -> int:
@@ -691,11 +685,11 @@ class RustyBoardChi(IBoard):
     def ep_square(self) -> int | None:
         return self.ep_square_
 
-    def is_zeroing(self, move: moveKey) -> bool:
+    def is_zeroing(self, move: MoveKey) -> bool:
         """Check if a move is a zeroing move (i.e., checks if the given move is a capture or pawn move.
 
         Args:
-            move (moveKey): The move to check.
+            move (MoveKey): The move to check.
 
         Returns:
             bool: True if the move is a zeroing move, False otherwise.

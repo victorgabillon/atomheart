@@ -5,22 +5,22 @@ import pytest
 
 from atomheart.board import (
     BoardModificationP,
+    Fen,
     IBoard,
     create_board,
     create_board_chi,
-    fen,
 )
 from atomheart.board.board_modification import (
     PieceInSquare,
     compute_modifications,
 )
 from atomheart.board.utils import FenPlusHistory
-from atomheart.move import moveUci
+from atomheart.move import MoveUci
 
 if TYPE_CHECKING:
     from atomheart import BoardChi
 
-examples: list[tuple[fen, moveUci, list[PieceInSquare], list[PieceInSquare]]] = [
+examples: list[tuple[Fen, MoveUci, list[PieceInSquare], list[PieceInSquare]]] = [
     (
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "e2e3",
@@ -70,8 +70,8 @@ examples: list[tuple[fen, moveUci, list[PieceInSquare], list[PieceInSquare]]] = 
 
 @pytest.mark.parametrize(("use_rust_boards"), (True, False))
 def test_modifications(use_rust_boards: bool) -> None:
-    fen_original: fen
-    move_uci: moveUci
+    fen_original: Fen
+    move_uci: MoveUci
     removals: list[PieceInSquare]
     appearances: list[PieceInSquare]
 
@@ -93,8 +93,8 @@ def test_modifications(use_rust_boards: bool) -> None:
 
 
 def test_compute_modifications() -> None:
-    fen_original: fen
-    move_uci: moveUci
+    fen_original: Fen
+    move_uci: MoveUci
     removals: list[PieceInSquare]
     appearances: list[PieceInSquare]
 

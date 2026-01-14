@@ -5,37 +5,53 @@ from dataclasses import dataclass, field
 
 import chess
 
-from atomheart.move import moveUci
+from atomheart.move import MoveUci
 
-fen = typing.Annotated[str, "a string representing a fen"]
+Fen = typing.Annotated[str, "a string representing a fen"]
+
+
+def _moves_factory() -> list[chess.Move]:
+    return []
+
+
+def _uci_factory() -> list[MoveUci]:
+    return []
+
+
+def _board_states_factory() -> list[chess._BoardState]:  # pyright: ignore[reportPrivateUsage]
+    return []  # pyright: ignore[reportPrivateUsage]
 
 
 @dataclass
 class FenPlusMoves:
-    """Represents a FEN string and its subsequent moves."""
+    """
+    FenPlusMoves dataclass to hold a FEN string and subsequent moves.
+    """
 
-    original_fen: fen
-    subsequent_moves: list[chess.Move] = field(
-        default_factory=lambda: list[chess.Move]()
-    )
+    original_fen: Fen
+    subsequent_moves: list[chess.Move] = field(default_factory=_moves_factory)
 
 
 @dataclass
 class FenPlusMoveHistory:
-    """Represents a FEN string and its move history."""
+    """
+    FenPlusMoveHistory dataclass to hold a FEN string and subsequent moves in UCI format.
+    """
 
-    current_fen: fen
-    historical_moves: list[moveUci] = field(default_factory=lambda: list[moveUci]())
+    current_fen: Fen
+    historical_moves: list[MoveUci] = field(default_factory=_uci_factory)
 
 
 @dataclass
 class FenPlusHistory:
-    """Represents a FEN string and its move history, along with historical board states."""
+    """
+    FenPlusHistory dataclass to hold a FEN string, subsequent moves in UCI format
+    and historical board states."""
 
-    current_fen: fen
-    historical_moves: list[moveUci] = field(default_factory=lambda: list[moveUci]())
+    current_fen: Fen
+    historical_moves: list[MoveUci] = field(default_factory=_uci_factory)
     historical_boards: list[chess._BoardState] = field(  # pyright: ignore[reportPrivateUsage]
-        default_factory=lambda: list[chess._BoardState]()  # pyright: ignore[reportPrivateUsage]
+        default_factory=_board_states_factory
     )
 
     def current_turn(self) -> chess.Color:
@@ -60,7 +76,7 @@ class FenPlusHistory:
             elif turn_part == "b":
                 turn = chess.BLACK
             else:
-                raise ValueError(f"expected 'w' or 'b' for turn part of fen: {fen!r}")
+                raise ValueError(f"expected 'w' or 'b' for turn part of fen: {Fen!r}")
         return turn
 
 
