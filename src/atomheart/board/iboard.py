@@ -227,6 +227,7 @@ class IBoard(Protocol):
 
         Args:
             stack (bool): Whether to copy the move stack as well.
+            deep_copy_legal_moves (bool): Whether to deep copy the legal moves generator.
 
         Returns:
             BoardChi: A new instance of the BoardChi class with the copied board.
@@ -392,7 +393,7 @@ class IBoard(Protocol):
         """Returns the legal moves generator."""
         ...
 
-    # to comply with anemone interface for Node Content (seems hacky but avoid to create another wrapper for now)
+    # to comply with anemone interface for State (seems hacky but avoid to create another wrapper for now)
     @property
     def branch_keys(self) -> LegalMoveKeyGeneratorP:
         """Returns the legal moves generator."""
