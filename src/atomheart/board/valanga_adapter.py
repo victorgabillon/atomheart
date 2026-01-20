@@ -57,6 +57,7 @@ class ValangaChessState(valanga.State):
         """Get the branch key from a move name in UCI format."""
         return self.board.get_move_key_from_uci(name)
 
+    @property
     def turn(self) -> valanga.Color:
         """Get the current turn color."""
         return self.board.turn
