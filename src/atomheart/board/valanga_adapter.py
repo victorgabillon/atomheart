@@ -54,4 +54,9 @@ class ValangaChessState(valanga.State):
         return self.board.print_chess_board()
 
     def branch_key_from_name(self, name: str) -> valanga.BranchKey:
+        """Get the branch key from a move name in UCI format."""
         return self.board.get_move_key_from_uci(name)
+
+    def turn(self) -> valanga.Color:
+        """Get the current turn color."""
+        return self.board.turn
