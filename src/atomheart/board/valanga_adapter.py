@@ -44,3 +44,14 @@ class ValangaChessState(valanga.State):
         Called only if `name` wasn't found on the wrapper itself.
         """
         return getattr(self.board, name)
+
+    def pprint(self) -> str:
+        """Returns a pretty-printed string representation of the content.
+
+        Returns:
+            str: A pretty-printed string representation of the content.
+        """
+        return self.board.print_chess_board()
+
+    def branch_key_from_name(self, name: str) -> valanga.BranchKey:
+        return self.board.get_move_key_from_uci(name)
