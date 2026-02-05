@@ -19,7 +19,9 @@ class IMove(Protocol):
 
     @abstractmethod
     def uci(self) -> MoveUci:
-        """Returns the UCI string representation of the move.
-        Returns: moveUci: The UCI string representation of the move.
+        """Return the UCI string representation of the move.
+
+        Returns:
+            moveUci: The UCI string representation of the move.
         """
         ...

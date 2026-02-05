@@ -35,10 +35,11 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
 
     @property
     def all_generated_keys(self) -> Sequence[MoveKey] | None:
+        """Return the cached sequence of generated move keys, if available."""
         return self.all_generated_keys_
 
     def __init__(self, chess_board: chess.Board, sort_legal_moves: bool) -> None:
-        """Initializes the LegalMoveKeyGenerator.
+        """Initialize the LegalMoveKeyGenerator.
 
         Args:
             chess_board (chess.Board): The chess board to generate legal moves for.
@@ -53,7 +54,7 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         self.all_generated_keys_ = None
 
     def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
-        """Returns the UCI string corresponding to the given move key.
+        """Return the UCI string corresponding to the given move key.
 
         Args:
             move_key (MoveKey): The move key to convert to UCI.
@@ -71,7 +72,7 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         return self.chess_board.fen()
 
     def __str__(self) -> str:
-        """Returns a string representation of the legal move key generator.
+        """Return a string representation of the legal move key generator.
 
         Returns:
             str: A string representation of the legal move key generator.
@@ -88,13 +89,13 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
 
 
     def __iter__(self) -> Iterator[MoveKey]:
-        """Returns an iterator over the legal move keys."""
+        """Return an iterator over the legal move keys."""
         self.it = self.chess_board.generate_legal_moves()
         self.count = 0
         return self
 
     def __next__(self) -> MoveKey:
-        """Returns the next legal move key."""
+        """Return the next legal move key."""
         new_move: chess.Move = self.it.__next__()
         move_key_ = self.count
         self.generated_moves[move_key_] = new_move
@@ -104,7 +105,7 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
     def copy(
         self, copied_chess_board: chess.Board | None = None
     ) -> "LegalMoveKeyGenerator":
-        """Creates a copy of the LegalMoveKeyGenerator.
+        """Create a copy of the LegalMoveKeyGenerator.
 
         Args:
             copied_chess_board (chess.Board | None, optional): The chess board to use for the copy.
@@ -135,19 +136,20 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         return legal_move_copy
 
     def reset(self) -> None:
-        """Resets the iterator to the beginning of the legal moves."""
+        """Reset the iterator to the beginning of the legal moves."""
         self.it = self.chess_board.generate_legal_moves()
         self.generated_moves = {}
         self.count = 0
         self.all_generated_keys_ = None
 
     def copy_with_reset(self) -> Self:
-        """Returns a copy of the LegalMoveKeyGenerator with the iterator reset."""
+        """Return a copy of the LegalMoveKeyGenerator with the iterator reset."""
         return type(self)(
             chess_board=self.chess_board, sort_legal_moves=self.sort_legal_moves
         )
 
     def get_all(self) -> list[MoveKey]:
+        """Return a list of all legal move keys."""
         if self.all_generated_keys is None:
             if self.sort_legal_moves:
                 list_keys = sorted(
@@ -160,7 +162,7 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         return list(self.all_generated_keys)
 
     def more_than_one(self) -> bool:
-        """Checks if there is more than one legal move available.
+        """Check if there is more than one legal move available.
 
         Returns:
             bool: True if there is more than one legal move, False otherwise.
@@ -177,8 +179,9 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
 
 
 class BoardChi(IBoard):
-    """Board Chipiron
-    object that describes the current board. it wraps the chess Board from the chess package so it can have more in it.
+    """Board Chipiron.
+
+    Object that describes the current board. It wraps the chess Board from the chess package so it can have more in it.
     """
 
     chess_board: chess.Board
@@ -196,10 +199,13 @@ class BoardChi(IBoard):
         fast_representation_: BoardKey,
         legal_moves_: LegalMoveKeyGenerator,
     ) -> None:
-        """Initializes a new instance of the BoardChi class.
+        """Initialize a new instance of the BoardChi class.
 
         Args:
-            board: The chess.Board object to wrap.
+            chess_board: The chess.Board object to wrap.
+            compute_board_modification: Whether to compute board modifications when playing moves.
+            fast_representation_: A cached fast representation of the board state.
+            legal_moves_: The legal move generator to use.
 
         """
         self.chess_board = chess_board
@@ -223,6 +229,7 @@ class BoardChi(IBoard):
 
         Args:
             move: The move to play.
+            use_compute_modification_function: Whether to compute modifications via the helper function.
 
         Returns:
             The board modification resulting from the move or None.
@@ -340,8 +347,9 @@ class BoardChi(IBoard):
     def push_and_return_modification(
         self, move: chess.Move
     ) -> BoardModification | None:  # pylint: disable=all
-        """Mostly reuse the push function of the chess library but records the modifications to the bitboard so that
-        we can do the same with other parallel representations such as tensor in pytorch.
+        """Reuse the push function but record modifications to the bitboard.
+
+        This makes it possible to do the same with other parallel representations such as tensor in pytorch.
 
         Args:
              move: The move to push.
@@ -560,7 +568,7 @@ class BoardChi(IBoard):
         return board_modifications
 
     def compute_key_old(self) -> str:
-        """Computes and returns a unique key representing the current state of the chess board.
+        """Compute and return a unique key representing the current state of the chess board.
 
         The key is computed by concatenating various attributes of the board, including the positions of pawns, knights,
         bishops, rooks, queens, and kings, as well as the current turn, castling rights, en passant square, halfmove clock,
@@ -588,7 +596,7 @@ class BoardChi(IBoard):
         )
 
     def print_chess_board(self) -> str:
-        """Prints the current state of the chess board.
+        """Print the current state of the chess board.
 
         This method prints the current state of the chess board, including the position of all the pieces.
         It also prints the FEN (Forsyth-Edwards Notation) representation of the board.
@@ -600,7 +608,7 @@ class BoardChi(IBoard):
         return str(self.chess_board.fen)
 
     def number_of_pieces_on_the_board(self) -> int:
-        """Returns the number of pieces currently on the board.
+        """Return the number of pieces currently on the board.
 
         Returns:
             int: The number of pieces on the board.
@@ -643,7 +651,7 @@ class BoardChi(IBoard):
         return is_game_over
 
     def ply(self) -> int:
-        """Returns the number of half-moves (plies) that have been played on the board.
+        """Return the number of half-moves (plies) that have been played on the board.
 
         :return: The number of half-moves played on the board.
         :rtype: int
@@ -679,7 +687,7 @@ class BoardChi(IBoard):
         return self.legal_moves_
 
     def piece_at(self, square: chess.Square) -> chess.Piece | None:
-        """Returns the piece at the specified square on the chess board.
+        """Return the piece at the specified square on the chess board.
 
         Args:
             square (chess.Square): The square on the chess board.
@@ -752,6 +760,7 @@ class BoardChi(IBoard):
 
         Args:
             stack (bool): Whether to copy the move stack as well.
+            deep_copy_legal_moves (bool): Whether to deep copy the legal moves generator.
 
         Returns:
             BoardChi: A new instance of the BoardChi class with the copied board.
@@ -778,7 +787,7 @@ class BoardChi(IBoard):
         )
 
     def __str__(self) -> str:
-        """Returns a string representation of the board.
+        """Return a string representation of the board.
 
         Returns:
             str: A string representation of the board.
@@ -787,6 +796,7 @@ class BoardChi(IBoard):
         return self.chess_board.__str__()
 
     def tell_result(self) -> None:
+        """Log the result and relevant end conditions for the current board."""
         if self.chess_board.is_fivefold_repetition():
             chipiron_logger.info("is_fivefold_repetition")
         if self.chess_board.is_seventyfive_moves():

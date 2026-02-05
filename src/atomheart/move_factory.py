@@ -23,7 +23,7 @@ class MoveFactory(Protocol):
 def create_move_factory(
     use_rust_boards: bool,
 ) -> MoveFactory:
-    """Creates a move factory.
+    """Create a move factory.
 
     Args:
         use_rust_boards (bool): Whether to use Rust-based boards.
@@ -42,7 +42,7 @@ def create_move_factory(
 def create_rust_move(
     move_uci: MoveUci, board: RustyBoardChi | None = None
 ) -> shakmaty_python_binding.MyMove:
-    """Creates a Rust-based move.
+    """Create a Rust-based move.
 
     Args:
         move_uci (moveUci): The UCI string of the move.
@@ -59,7 +59,7 @@ def create_rust_move(
 def create_rust_move_test_2(
     move_uci: MoveUci, board: IBoard | None = None
 ) -> shakmaty_python_binding.MyMove:
-    """Creates a Rust-based move for testing purposes.
+    """Create a Rust-based move for testing purposes.
 
     Args:
         move_uci (moveUci): The UCI string of the move.
@@ -75,7 +75,7 @@ def create_rust_move_test_2(
 
 
 def create_rust_move_test(move_uci: MoveUci, board: IBoard | None = None) -> chess.Move:
-    """Creates a Rust-based move for testing purposes.
+    """Create a Rust-based move for testing purposes.
 
     Args:
         move_uci (moveUci): The UCI string of the move.
@@ -90,7 +90,7 @@ def create_rust_move_test(move_uci: MoveUci, board: IBoard | None = None) -> che
 
 
 def create_move(move_uci: MoveUci, board: IBoard | None = None) -> chess.Move:  # pylint: disable=unused-argument
-    """Creates a standard chess move.
+    """Create a standard chess move.
 
     Args:
         move_uci (moveUci): The UCI string of the move.

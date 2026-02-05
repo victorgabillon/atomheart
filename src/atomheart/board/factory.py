@@ -123,10 +123,9 @@ def create_board_chi(
     """Create a chipiron chess board.
 
     Args:
-        use_board_modification (bool): whether to use the board modification
-        fen_with_history (FenPlusMoves | None): The BoardWithHistory that contains a fen and the subsequent moves.
-            The FEN (Forsyth-Edwards Notation) string representing the board position. If None, the starting position
-            is used.
+        fen_with_history (FenPlusHistory | None): Optional FEN and history data. If None, the starting position is used.
+        use_board_modification (bool): Whether to use the board modification.
+        sort_legal_moves (bool): Whether to sort legal moves.
 
     Returns:
         BoardChi: The created chess board.
@@ -162,10 +161,9 @@ def create_rust_board(
     """Create a rust chess board.
 
     Args:
-        use_board_modification (bool): whether to use the board modification
-        board_with_history (FenPlusMoves | None): The BoardWithHistory that contains a fen and the subsequent moves.
-            The FEN (Forsyth-Edwards Notation) string representing the board position. If None, the starting position
-            is used.
+        fen_with_history (FenPlusHistory | None): Optional FEN and history data. If None, the starting position is used.
+        use_board_modification (bool): Whether to use the board modification.
+        sort_legal_moves (bool): Whether to sort legal moves.
 
     Returns:
         RustyBoardChi: The created chess board.

@@ -1,4 +1,5 @@
-"""Module: rusty_board
+"""Module: rusty_board.
+
 Defines a Rust-based chess board implementation using shakmaty_python_binding.
 """
 
@@ -40,10 +41,11 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
 
     @property
     def all_generated_keys(self) -> Sequence[MoveKey] | None:
+        """Return the cached sequence of generated move keys, if available."""
         return self.all_generated_keys_
 
     def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
-        """Returns the UCI string corresponding to the given move key.
+        """Return the UCI string corresponding to the given move key.
 
         Args:
             move_key (MoveKey): The move key to convert to UCI.
@@ -61,8 +63,8 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         sort_legal_moves: bool,
         chess_rust_binding: shakmaty_python_binding.MyChess,
         generated_moves: list[shakmaty_python_binding.MyMove] | None = None,
-    )-> None:
-        """LegalMoveKeyGeneratorRust is a Rust-compatible implementation of the LegalMoveKeyGeneratorP interface.
+    ) -> None:
+        """Initialize the Rust-compatible legal move generator.
 
         Args:
             sort_legal_moves (bool): Whether to sort the legal moves.
@@ -94,18 +96,18 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
 
     @property
     def fen(self) -> Fen:
-        """Returns the FEN string of the current chess position."""
+        """Return the FEN string of the current chess position."""
         return self.chess_rust_binding.fen()
 
     def reset(self, generated_moves: list[shakmaty_python_binding.MyMove]) -> None:
-        """Resets the legal move generator with a new list of generated moves."""
+        """Reset the legal move generator with a new list of generated moves."""
         self.generated_moves = generated_moves
         self.number_moves = len(generated_moves)
         self.it = iter(range(self.number_moves))
         self.all_generated_keys_ = list(range(self.number_moves))
 
     def copy_with_reset(self) -> "LegalMoveKeyGeneratorRust":
-        """Creates a copy of the legal move generator with reset state."""
+        """Create a copy of the legal move generator with reset state."""
         return LegalMoveKeyGeneratorRust(
             chess_rust_binding=self.chess_rust_binding,
             generated_moves=None,
@@ -115,12 +117,12 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
     def set_legal_moves(
         self, generated_moves: list[shakmaty_python_binding.MyMove]
     ) -> None:
-        """Sets the legal moves for the generator."""
+        """Set the legal moves for the generator."""
         self.generated_moves = generated_moves
         self.number_moves = len(generated_moves)
 
     def __iter__(self) -> Iterator[MoveKey]:
-        """Returns an iterator over the legal move keys."""
+        """Return an iterator over the legal move keys."""
         if self.generated_moves is None:
             self.generated_moves = self.chess_rust_binding.legal_moves()
         if self.sort_legal_moves:
@@ -141,13 +143,13 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         return self
 
     def __next__(self) -> MoveKey:
-        """Returns the next legal move key in the iteration."""
+        """Return the next legal move key in the iteration."""
         return self.it.__next__()
 
     def copy(
         self, copied_chess_rust_binding: shakmaty_python_binding.MyChess | None = None
     ) -> "LegalMoveKeyGeneratorRust":
-        """Creates a copy of the legal move generator.
+        """Create a copy of the legal move generator.
 
         Args:
             copied_chess_rust_binding (shakmaty_python_binding.MyChess | None, optional): The Rust chess binding to use in the copy. Defaults to None.
@@ -176,7 +178,7 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         return legal_move_copy
 
     def get_all(self) -> Sequence[MoveKey]:
-        """Returns a sequence of all legal move keys.
+        """Return a sequence of all legal move keys.
 
         Returns:
             Sequence[MoveKey]: A sequence of all legal move keys.
@@ -202,6 +204,7 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         return self.all_generated_keys_
 
     def more_than_one(self) -> bool:
+        """Check if there is more than one legal move available."""
         if self.generated_moves is None:
             self.generated_moves = self.chess_rust_binding.legal_moves()
             self.number_moves = len(self.generated_moves)
@@ -218,8 +221,9 @@ def _move_stack_factory() -> list[MoveUci]:
 
 @dataclass
 class RustyBoardChi(IBoard):
-    """Rusty Board Chipiron
-    object that describes the current board. it wraps the chess Board from the chess package so it can have more in it
+    """Rusty Board Chipiron.
+
+    Object that describes the current board. It wraps the chess Board from the chess package so it can have more in it
     but im not sure its really necessary.i keep it for potential usefulness.
 
     This is the Rust version for speedy execution
@@ -257,10 +261,11 @@ class RustyBoardChi(IBoard):
     move_stack: list[MoveUci] = field(default_factory=_move_stack_factory)
 
     def __post_init__(self) -> None:
+        """Initialize repetition counters after dataclass creation."""
         self.rep_to_count[self.fast_representation_without_counters] = 1
 
     def __str__(self) -> str:
-        """Returns a string representation of the board.
+        """Return a string representation of the board.
 
         Returns:
             str: A string representation of the board.
@@ -324,7 +329,7 @@ class RustyBoardChi(IBoard):
         appearances: set[tuple[int, int, int]],
         removals: set[tuple[int, int, int]],
     ) -> BoardModificationRust:
-        """Converts appearances and removals into a BoardModificationRust object.
+        """Convert appearances and removals into a BoardModificationRust object.
 
         Args:
             appearances (set[tuple[int, int, int]]): The set of appearances.
@@ -388,6 +393,7 @@ class RustyBoardChi(IBoard):
         return board_modifications
 
     def play_move_uci(self, move_uci: MoveUci) -> BoardModificationP | None:
+        """Play a move in UCI format."""
         chess_move: shakmaty_python_binding.MyMove = shakmaty_python_binding.MyMove(
             uci=move_uci, my_chess=self.chess_
         )
@@ -395,6 +401,7 @@ class RustyBoardChi(IBoard):
 
     # TODO(victor): look like this function might move to iboard when the dust settle. See issue #24 for more details.
     def play_move_key(self, move: MoveKey) -> BoardModificationP | None:
+        """Play a move using its key."""
         assert self.legal_moves_.generated_moves is not None
         my_move: shakmaty_python_binding.MyMove = self.legal_moves_.generated_moves[
             move
@@ -402,7 +409,7 @@ class RustyBoardChi(IBoard):
         return self.play_move(move=my_move)
 
     def ply(self) -> int:
-        """Returns the number of half-moves (plies) that have been played on the board.
+        """Return the number of half-moves (plies) that have been played on the board.
 
         :return: The number of half-moves played on the board.
         :rtype: int
@@ -451,6 +458,7 @@ class RustyBoardChi(IBoard):
 
         Args:
             stack (bool): Whether to copy the move stack as well.
+            deep_copy_legal_moves (bool): Whether to deep copy the legal moves generator.
 
         Returns:
             RustyBoardChi: A new instance of the BoardChi class with the copied board.
@@ -501,7 +509,7 @@ class RustyBoardChi(IBoard):
         return self.legal_moves_
 
     def number_of_pieces_on_the_board(self) -> int:
-        """Returns the number of pieces currently on the board.
+        """Return the number of pieces currently on the board.
 
         Returns:
             int: The number of pieces on the board.
@@ -518,7 +526,7 @@ class RustyBoardChi(IBoard):
         return self.chess_.fen()
 
     def piece_at(self, square: chess.Square) -> chess.Piece | None:
-        """Returns the piece at the specified square on the chess board.
+        """Return the piece at the specified square on the chess board.
 
         Args:
             square (chess.Square): The square on the chess board.
@@ -536,6 +544,7 @@ class RustyBoardChi(IBoard):
         return piece
 
     def piece_map(self) -> dict[chess.Square, tuple[int, bool]]:
+        """Return a mapping of squares to piece type and color."""
         return self.chess_.piece_map()
 
     def has_kingside_castling_rights(self, color: chess.Color) -> bool:
@@ -563,7 +572,7 @@ class RustyBoardChi(IBoard):
         return self.chess_.has_queenside_castling_rights(color)
 
     def print_chess_board(self) -> str:
-        """Prints the current state of the chess board.
+        """Print the current state of the chess board.
 
         This method prints the current state of the chess board, including the position of all the pieces.
         It also prints the FEN (Forsyth-Edwards Notation) representation of the board.
@@ -574,15 +583,18 @@ class RustyBoardChi(IBoard):
         """
         return str(self.chess_.fen())
 
-    def tell_result(self) -> None: ...
+    def tell_result(self) -> None:
+        """Log the result for the current board state."""
+        ...
 
     @property
     def move_history_stack(self) -> list[MoveUci]:
+        """Return the history of moves made in the game."""
         return self.move_stack
 
 
     def dump(self, file: Any) -> None:
-        """Dumps the current state of the board to the specified file."""
+        """Dump the current state of the board to the specified file."""
 
     def is_attacked(self, a_color: chess.Color) -> bool:
         """Check if any piece of the color `a_color` is attacked.
@@ -598,43 +610,53 @@ class RustyBoardChi(IBoard):
 
     @property
     def pawns(self) -> chess.Bitboard:
+        """Return the pawns bitboard."""
         return self.chess_.pawns()
 
     @property
     def knights(self) -> chess.Bitboard:
+        """Return the knights bitboard."""
         return self.knights_
 
     @property
     def bishops(self) -> chess.Bitboard:
+        """Return the bishops bitboard."""
         return self.bishops_
 
     @property
     def rooks(self) -> chess.Bitboard:
+        """Return the rooks bitboard."""
         return self.rooks_
 
     @property
     def queens(self) -> chess.Bitboard:
+        """Return the queens bitboard."""
         return self.queens_
 
 
     @property
     def kings(self) -> chess.Bitboard:
+        """Return the kings bitboard."""
         return self.kings_
 
 
     @property
     def white(self) -> chess.Bitboard:
+        """Return the white pieces bitboard."""
         return self.white_
 
     @property
     def black(self) -> chess.Bitboard:
+        """Return the black pieces bitboard."""
         return self.black_
 
     @property
     def occupied(self) -> chess.Bitboard:
+        """Return the occupied squares bitboard."""
         return self.chess_.occupied()
 
     def result(self, claim_draw: bool = False) -> str:
+        """Return the game result as a string."""
         claim_draw_: bool = len(self.move_stack) >= 5 and claim_draw
         three_fold_repetition: bool = (
             max(self.rep_to_count.values()) > 2 if claim_draw_ else False
@@ -646,30 +668,37 @@ class RustyBoardChi(IBoard):
 
     @property
     def castling_rights(self) -> chess.Bitboard:
+        """Return the castling rights bitboard."""
         return self.castling_rights_
 
     def termination(self) -> None:
+        """Return the termination status for the game (not available in Rust binding)."""
         return None
 
     def occupied_color(self, color: chess.Color) -> chess.Bitboard:
+        """Return the occupied squares bitboard for a given color."""
         if color == chess.WHITE:
             return self.chess_.white()
         return self.chess_.black()
 
     @property
     def halfmove_clock(self) -> int:
+        """Return the halfmove clock value."""
         return self.chess_.halfmove_clock()
 
     @property
     def promoted(self) -> chess.Bitboard:
+        """Return the promoted pieces bitboard."""
         return self.promoted_
 
     @property
     def fullmove_number(self) -> int:
+        """Return the fullmove number."""
         return self.chess_.fullmove_number()
 
     @property
     def ep_square(self) -> int | None:
+        """Return the en passant square, if any."""
         return self.ep_square_
 
     def is_zeroing(self, move: MoveKey) -> bool:
@@ -689,6 +718,7 @@ class RustyBoardChi(IBoard):
         return chess_move.is_zeroing()
 
     def into_fen_plus_history(self) -> FenPlusHistory:
+        """Convert the current board state into a FenPlusHistory object."""
         return FenPlusHistory(
             current_fen=self.fen, historical_moves=self.move_history_stack
         )
