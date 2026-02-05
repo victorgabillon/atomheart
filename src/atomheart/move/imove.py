@@ -23,5 +23,6 @@ class IMove(Protocol):
 
         Returns:
             moveUci: The UCI string representation of the move.
+
         """
         ...

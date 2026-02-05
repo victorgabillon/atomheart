@@ -1,3 +1,5 @@
+"""Test board."""
+
 from typing import TYPE_CHECKING
 
 import chess
@@ -12,6 +14,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.parametrize(("use_rusty_board"), (True, False))
 def test_copy(use_rusty_board: bool) -> None:
+    """Test that copying the board also copies the legal moves and that they are independent of each other."""
     board: IBoard = create_board(
         use_rust_boards=use_rusty_board,
         fen_with_history=FenPlusHistory(current_fen=chess.STARTING_FEN),
@@ -31,6 +34,7 @@ def test_copy(use_rusty_board: bool) -> None:
 
 @pytest.mark.parametrize(("use_rusty_board"), (True, False))
 def test_move(use_rusty_board: bool) -> None:
+    """Test that playing a move on the board results in the expected FEN string."""
     examples: list[tuple[Fen, MoveUci, Fen]] = [
         (
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",

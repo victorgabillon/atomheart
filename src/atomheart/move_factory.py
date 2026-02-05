@@ -73,7 +73,6 @@ def create_rust_move_test_2(
     return shakmaty_python_binding.MyMove(move_uci, board.chess_)
 
 
-
 def create_rust_move_test(move_uci: MoveUci, board: IBoard | None = None) -> chess.Move:
     """Create a Rust-based move for testing purposes.
 

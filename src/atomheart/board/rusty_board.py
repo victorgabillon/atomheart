@@ -585,13 +585,11 @@ class RustyBoardChi(IBoard):
 
     def tell_result(self) -> None:
         """Log the result for the current board state."""
-        ...
 
     @property
     def move_history_stack(self) -> list[MoveUci]:
         """Return the history of moves made in the game."""
         return self.move_stack
-
 
     def dump(self, file: Any) -> None:
         """Dump the current state of the board to the specified file."""
@@ -633,12 +631,10 @@ class RustyBoardChi(IBoard):
         """Return the queens bitboard."""
         return self.queens_
 
-
     @property
     def kings(self) -> chess.Bitboard:
         """Return the kings bitboard."""
         return self.kings_
-
 
     @property
     def white(self) -> chess.Bitboard:
@@ -673,7 +669,7 @@ class RustyBoardChi(IBoard):
 
     def termination(self) -> None:
         """Return the termination status for the game (not available in Rust binding)."""
-        return None
+        return
 
     def occupied_color(self, color: chess.Color) -> chess.Bitboard:
         """Return the occupied squares bitboard for a given color."""

@@ -25,6 +25,7 @@ BoardKeyWithoutCounters = tuple[
     int, int, int, int, int, int, bool, int, int | None, int, int, int
 ]
 
+
 class BoardInvariantError(RuntimeError):
     """Raised when there is an invariant error in the board, such as an inconsistent legal moves / UCI relation."""
 
@@ -33,6 +34,7 @@ class BoardInvariantError(RuntimeError):
         super().__init__(
             "internal error: inconsistent legal-moves / UCI relation in boards object"
         )
+
 
 class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
     """Protocol for a legal move generator that yields move keys."""

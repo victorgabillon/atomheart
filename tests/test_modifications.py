@@ -1,3 +1,5 @@
+"""Test the board modifications when playing a move on the board."""
+
 from typing import TYPE_CHECKING
 
 import chess
@@ -70,6 +72,7 @@ examples: list[tuple[Fen, MoveUci, list[PieceInSquare], list[PieceInSquare]]] = 
 
 @pytest.mark.parametrize(("use_rust_boards"), (True, False))
 def test_modifications(use_rust_boards: bool) -> None:
+    """Test that playing a move on the board results in the expected modifications."""
     fen_original: Fen
     move_uci: MoveUci
     removals: list[PieceInSquare]
@@ -93,6 +96,7 @@ def test_modifications(use_rust_boards: bool) -> None:
 
 
 def test_compute_modifications() -> None:
+    """Test that computing the modifications from the previous and new board state results in the expected modifications."""
     fen_original: Fen
     move_uci: MoveUci
     removals: list[PieceInSquare]

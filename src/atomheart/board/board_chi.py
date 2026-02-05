@@ -87,7 +87,6 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         the_string = the_string + f"Generated ucis {ucis}"
         return the_string + f" and generated keys {keys}"
 
-
     def __iter__(self) -> Iterator[MoveKey]:
         """Return an iterator over the legal move keys."""
         self.it = self.chess_board.generate_legal_moves()
