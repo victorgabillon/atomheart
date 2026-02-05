@@ -64,6 +64,9 @@ dev = [
 
 ]
 
+[tool.setuptools.package-data]
+atomheart = ["py.typed"]
+
 
 [tool.pytest.ini_options]
 addopts = "--cov=atomheart"
