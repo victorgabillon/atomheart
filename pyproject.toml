@@ -9,7 +9,7 @@ description = "chess environment"
 requires-python = ">=3.13"
 dependencies = [
     "rich",
-    "valanga >=0.1.5",
+    "valanga >=0.1.14",
     "chess",
     "shakmaty_python_binding>=0.1.5",
     "PyYAML",
@@ -26,8 +26,8 @@ test = [
 ]
 
 lint = [
-  "ruff>=0.14.1",
-  "pylint>=3.3.8",
+  "ruff>=0.15.0",
+  "pylint>=4.0.4",
 ]
 
 typecheck = [
@@ -42,8 +42,8 @@ dev = [
     "types-PyYAML>=6.0.12.12",
 
     # Linting & formatting
-    "ruff>=0.14.1",
-    "pylint>=3.3.8",
+    "ruff>=0.15.0",
+    "pylint>=4.0.4",
     "black>=25.1.0",
 
     # Type checking
@@ -116,13 +116,15 @@ line-length = 88
 target-version = "py313"
 
 # Enable import sorting (alphabetical + group order)
-lint.select = ["I", "F", "E", "B", "TCH"]  # I = imports, F = pyflakes, E = pycodestyle, TCH = type-checking, B = black
+lint.select = ["I", "F", "E", "B", "TCH","UP","SIM", "RUF","RET",
+"ANN", "PERF", "TRY","LOG","RSE",
+"ISC","PIE","ERA","TD"]  # I = imports, F = pyflakes, E = pycodestyle, TCH = type-checking, B = black
 
 # Allow auto-fixing for imports and type-checking imports
-lint.fixable = ["I", "TCH", "F401"]
+lint.fixable = ["I", "TCH", "F401","UP","SIM","RET","RUF","ERA"]
 
 # Ignore rules you don't care about
-lint.ignore = [ "E501"]
+lint.ignore = [ "E501","PLR0913","ANN401"]
 
 # Optional: add your first-party package to extend the known group
 [tool.ruff.lint.per-file-ignores]
@@ -194,8 +196,8 @@ deps = [
   "PyYAML",
 
   # tool deps
-  "ruff>=0.14.1",
-  "pylint>=3.3.8",
+  "ruff>=0.15.0",
+  "pylint>=4.0.4",
 ]
 set_env = { PYTHONPATH = "{toxinidir}/src" }
 commands = [

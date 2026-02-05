@@ -3,14 +3,14 @@ Module defining the starting position arguments for the chess board.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from importlib.resources import as_file, files
 from typing import Literal, Protocol
 
 from atomheart.board.board_tools import convert_to_fen
 
 
-class StartingPositionArgsType(str, Enum):
+class StartingPositionArgsType(StrEnum):
     """
     Enum class representing the type of starting position arguments.
     """
@@ -68,10 +68,9 @@ class FileStartingPositionArgs(StartingPositionArgs):
             str: The FEN string of the current board position.
         """
         resource = files("chipiron").joinpath("data/starting_boards/" + self.file_name)
-        with as_file(resource) as real_path:
-            with open(real_path, "r", encoding="utf-8") as f:
-                ascii_board: str = str(f.read())
-                fen: str = convert_to_fen(ascii_board)
+        with as_file(resource) as real_path, open(real_path, encoding="utf-8") as f:
+            ascii_board: str = str(f.read())
+            fen: str = convert_to_fen(ascii_board)
         return fen
 
 

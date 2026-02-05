@@ -3,7 +3,8 @@ Module that contains the BoardChi class that wraps the chess.Board class from th
 """
 
 import typing
-from typing import Iterator, Self, Sequence
+from collections.abc import Iterator, Sequence
+from typing import Self
 
 import chess
 from chess import Outcome, _BoardState  # pyright: ignore[reportPrivateUsage]
@@ -79,9 +80,8 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
         keys: list[MoveKey] = list(self.generated_moves.keys())
 
         the_string = the_string + f"Generated ucis {ucis}"
-        the_string = the_string + f" and generated keys {keys}"
+        return the_string + f" and generated keys {keys}"
 
-        return the_string
 
     def __iter__(self) -> Iterator[MoveKey]:
         """Returns an iterator over the legal move keys."""
@@ -136,10 +136,9 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
 
     def copy_with_reset(self) -> Self:
         """Returns a copy of the LegalMoveKeyGenerator with the iterator reset."""
-        legal_move_copy = type(self)(
+        return type(self)(
             chess_board=self.chess_board, sort_legal_moves=self.sort_legal_moves
         )
-        return legal_move_copy
 
     def get_all(self) -> list[MoveKey]:
         if self.all_generated_keys is None:
@@ -321,8 +320,7 @@ class BoardChi(IBoard):
             BoardModificationP | None: The board modification resulting from the move, or None if the move is invalid.
         """
         chess_move: chess.Move = self.legal_moves_.generated_moves[move]
-        board_modification = self.play_move(move=chess_move)
-        return board_modification
+        return self.play_move(move=chess_move)
 
     def rewind_one_move(self) -> None:
         """
@@ -380,7 +378,7 @@ class BoardChi(IBoard):
         # On a null move, simply swap turns and reset the en passant square.
         if not move:
             self.chess_board.turn = not self.chess_board.turn
-            return
+            return None
 
         # Drops.
         if move.drop:
@@ -388,7 +386,7 @@ class BoardChi(IBoard):
                 move.to_square, move.drop, self.chess_board.turn
             )
             self.chess_board.turn = not self.turn
-            return
+            return None
 
         # Zero the half-move clock.
         if self.chess_board.is_zeroing(move):
@@ -569,7 +567,7 @@ class BoardChi(IBoard):
         Returns:
             str: A unique key representing the current state of the chess board.
         """
-        string = (
+        return (
             str(self.chess_board.pawns)
             + str(self.chess_board.knights)
             + str(self.chess_board.bishops)
@@ -585,14 +583,13 @@ class BoardChi(IBoard):
             + str(self.chess_board.promoted)
             + str(self.chess_board.fullmove_number)
         )
-        return string
 
     def print_chess_board(self) -> str:
         """
         Prints the current state of the chess board.
 
         This method prints the current state of the chess board, including the position of all the pieces.
-        It also prints the FEN (Forsyth–Edwards Notation) representation of the board.
+        It also prints the FEN (Forsyth-Edwards Notation) representation of the board.
 
         Returns:
             None
@@ -636,7 +633,7 @@ class BoardChi(IBoard):
         """
         # assume that player claim draw otherwise the opponent might be overoptimistic
         # in winning position where draw by repetition occur
-        claim_draw: bool = True if len(self.chess_board.move_stack) >= 4 else False
+        claim_draw: bool = len(self.chess_board.move_stack) >= 4
 
         is_game_over: bool = self.chess_board.is_game_over(claim_draw=claim_draw)
         return is_game_over

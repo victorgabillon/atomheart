@@ -8,7 +8,7 @@ from .board.valanga_adapter import ValangaChessState
 
 __all__ = [
     "BoardChi",
+    "ValangaChessState",
     "create_board_chi",
     "create_board_chi_from_pychess_board",
-    "ValangaChessState",
 ]

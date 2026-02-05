@@ -37,11 +37,8 @@ def create_move_factory(
     """
     move_factory: MoveFactory
 
-    if use_rust_boards:
-        # todo can we go back to the not test version without the assert? generics or just typos?
-        move_factory = create_rust_move_test_2
-    else:
-        move_factory = create_move
+    # TODO(victor): can we go back to the not test version without the assert? generics or just typos? See issue #24 for more details.
+    move_factory = create_rust_move_test_2 if use_rust_boards else create_move
     return move_factory
 
 
@@ -70,10 +67,8 @@ def create_rust_move_test_2(
         shakmaty_python_binding.MyMove: The created Rust-based move.
     """
     assert isinstance(board, RustyBoardChi)
-    binding_move = shakmaty_python_binding.MyMove(move_uci, board.chess_)
-    # rust_move = RustMove(move=binding_move, uci=move_uci)
-    # return rust_move
-    return binding_move
+    return shakmaty_python_binding.MyMove(move_uci, board.chess_)
+
 
 
 def create_rust_move_test(move_uci: MoveUci, board: IBoard | None = None) -> chess.Move:

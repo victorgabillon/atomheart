@@ -1,9 +1,7 @@
 """Module to convert an ascii board to a FEN string."""
 
-from typing import AnyStr
 
-
-def convert_line(line: AnyStr, index: int) -> str:
+def convert_line[AnyStr: (bytes, str)](line: AnyStr, index: int) -> str:
     """
     Convert a line of the ascii board to a FEN string.
 
@@ -46,5 +44,4 @@ def convert_to_fen(ascii_board: str | bytes) -> str:
         fen = fen + convert_line(line, 0) + "/"
 
     fen = fen[:-1]
-    fen = fen + " " + str(list_ascii_board[-1])
-    return fen
+    return fen + " " + str(list_ascii_board[-1])

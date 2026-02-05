@@ -10,6 +10,22 @@ from atomheart.move import MoveUci
 Fen = typing.Annotated[str, "a string representing a fen"]
 
 
+class FenError(ValueError):
+    """Base class for FEN parsing errors."""
+
+
+class EmptyFenError(FenError):
+    """Raised when a FEN string is empty."""
+    def __init__(self) -> None:
+        super().__init__("empty fen")
+
+
+class InvalidFenTurnError(FenError):
+    """Raised when the turn part of a FEN string is invalid."""
+    def __init__(self, fen: str) -> None:
+        super().__init__(f"expected 'w' or 'b' for turn part of fen: {fen!r}")
+
+
 def _moves_factory() -> list[chess.Move]:
     return []
 
@@ -63,7 +79,7 @@ class FenPlusHistory:
         try:
             _ = parts.pop(0)
         except IndexError:
-            raise ValueError("empty fen") from None
+            raise EmptyFenError from None
 
         # Turn.
         try:
@@ -76,7 +92,7 @@ class FenPlusHistory:
             elif turn_part == "b":
                 turn = chess.BLACK
             else:
-                raise ValueError(f"expected 'w' or 'b' for turn part of fen: {Fen!r}")
+                raise InvalidFenTurnError(self.current_fen)
         return turn
 
 

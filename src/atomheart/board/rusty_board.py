@@ -4,8 +4,9 @@ Defines a Rust-based chess board implementation using shakmaty_python_binding.
 """
 
 from collections import Counter
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterator, Self, Sequence, no_type_check
+from typing import Any, Self, no_type_check
 
 import chess
 import shakmaty_python_binding
@@ -57,7 +58,7 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         sort_legal_moves: bool,
         chess_rust_binding: shakmaty_python_binding.MyChess,
         generated_moves: list[shakmaty_python_binding.MyMove] | None = None,
-    ):
+    )-> None:
         """LegalMoveKeyGeneratorRust is a Rust-compatible implementation of the LegalMoveKeyGeneratorP interface.
 
         Args:
@@ -102,12 +103,11 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
 
     def copy_with_reset(self) -> "LegalMoveKeyGeneratorRust":
         """Creates a copy of the legal move generator with reset state."""
-        legal_move_copy = LegalMoveKeyGeneratorRust(
+        return LegalMoveKeyGeneratorRust(
             chess_rust_binding=self.chess_rust_binding,
             generated_moves=None,
             sort_legal_moves=self.sort_legal_moves,
         )
-        return legal_move_copy
 
     def set_legal_moves(
         self, generated_moves: list[shakmaty_python_binding.MyMove]
@@ -187,12 +187,11 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
                     assert self.generated_moves is not None
                     return self.generated_moves[i].uci()
 
-                s = sorted(
+                return sorted(
                     list(range(self.number_moves)),
                     # key=lambda i: self.generated_moves[i].uci()
                     key=f,
                 )
-                return s
             return list(range(self.number_moves))
         return self.all_generated_keys_
 
@@ -496,7 +495,7 @@ class RustyBoardChi(IBoard):
 
     @property
     def legal_moves(self) -> LegalMoveKeyGeneratorRust:
-        # todo minimize this call and understand when the role of the variable all legal move generated
+        # TODO(victor): minimize this call and understand when the role of the variable all legal move generated. See issue #24 for more details. 
         return self.legal_moves_
 
     def number_of_pieces_on_the_board(self) -> int:
@@ -537,8 +536,7 @@ class RustyBoardChi(IBoard):
         return piece
 
     def piece_map(self) -> dict[chess.Square, tuple[int, bool]]:
-        dict_raw = self.chess_.piece_map()
-        return dict_raw
+        return self.chess_.piece_map()
 
     def has_kingside_castling_rights(self, color: chess.Color) -> bool:
         """
@@ -569,7 +567,7 @@ class RustyBoardChi(IBoard):
         Prints the current state of the chess board.
 
         This method prints the current state of the chess board, including the position of all the pieces.
-        It also prints the FEN (Forsyth–Edwards Notation) representation of the board.
+        It also prints the FEN (Forsyth-Edwards Notation) representation of the board.
 
         Returns:
             None
@@ -582,9 +580,6 @@ class RustyBoardChi(IBoard):
     def move_history_stack(self) -> list[MoveUci]:
         return self.move_stack
 
-    # @property
-    # def board_history_stack(self) -> list[chess._BoardState]:
-    #    return self.board_stack
 
     def dump(self, file: Any) -> None:
         """Dumps the current state of the board to the specified file."""
@@ -608,39 +603,32 @@ class RustyBoardChi(IBoard):
     @property
     def knights(self) -> chess.Bitboard:
         return self.knights_
-        # return self.chess_.knights()
 
     @property
     def bishops(self) -> chess.Bitboard:
         return self.bishops_
-        #        return self.chess_.bishops()
 
     @property
     def rooks(self) -> chess.Bitboard:
         return self.rooks_
-        # return self.chess_.rooks()
 
     @property
     def queens(self) -> chess.Bitboard:
         return self.queens_
 
-    #        return self.chess_.queens()
 
     @property
     def kings(self) -> chess.Bitboard:
         return self.kings_
 
-    #        return self.chess_.kings()
 
     @property
     def white(self) -> chess.Bitboard:
         return self.white_
-        # return self.chess_.white()
 
     @property
     def black(self) -> chess.Bitboard:
         return self.black_
-        # return self.chess_.black()
 
     @property
     def occupied(self) -> chess.Bitboard:
@@ -658,7 +646,6 @@ class RustyBoardChi(IBoard):
 
     @property
     def castling_rights(self) -> chess.Bitboard:
-        # return self.chess_.castling_rights()
         return self.castling_rights_
 
     def termination(self) -> None:

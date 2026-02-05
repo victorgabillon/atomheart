@@ -198,10 +198,7 @@ def create_rust_board(
     promoted: int = chess_rust_binding.promoted()
     castling_rights: int = chess_rust_binding.castling_rights()
 
-    if ep_square_int == -1:
-        ep_square = None
-    else:
-        ep_square = ep_square_int
+    ep_square = None if ep_square_int == -1 else ep_square_int
 
     board_key_representation: BoardKey = compute_key(
         pawns=pawns,

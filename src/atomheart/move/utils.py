@@ -2,8 +2,8 @@
 Utilities for move UCI representation.
 """
 
-from typing import Annotated, TypeAlias
+from typing import Annotated
 
-MoveUci: TypeAlias = Annotated[str, "a string representing a move uci"]
+type MoveUci = Annotated[str, "a string representing a move uci"]
 
-HalfMove: TypeAlias = Annotated[int, "an integer representing a half move"]
+type HalfMove = Annotated[int, "an integer representing a half move"]

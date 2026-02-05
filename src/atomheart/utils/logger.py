@@ -3,8 +3,8 @@ Logging utilities for the Atomheart project.
 """
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 from rich.logging import RichHandler
 
@@ -37,7 +37,7 @@ def set_chipiron_logger_level(level: int) -> None:
 @contextmanager
 def suppress_logging(
     logger: logging.Logger, level: int = logging.WARNING
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """
     Context manager to temporarily suppress logging for a specific logger to a given level.
 
@@ -62,7 +62,7 @@ def suppress_logging(
 
 # Suppress all logging from all loggers (global)
 @contextmanager
-def suppress_all_logging(level: int = logging.ERROR) -> Generator[None, None, None]:
+def suppress_all_logging(level: int = logging.ERROR) -> Generator[None]:
     """
     Context manager to temporarily suppress logging from all loggers to a specified level.
 

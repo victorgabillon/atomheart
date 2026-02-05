@@ -2,10 +2,16 @@
 Module that contains the BoardModification class
 """
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Iterator, Optional, Protocol
+from typing import Protocol
 
 import chess
+
+
+class IteratorNotInitializedError(TypeError):
+    def __init__(self) -> None:
+        super().__init__("Iterator not initialized. Call iter() first.")
 
 
 @dataclass(frozen=True)
@@ -105,7 +111,7 @@ class PieceRustIterator:
     """Iterator over PieceInSquare objects stored as tuples for Rust compatibility."""
 
     items_: set[tuple[int, int, int]] = field(default_factory=_rust_item_set)
-    _it: Optional[Iterator[tuple[int, int, int]]] = field(
+    _it: Iterator[tuple[int, int, int]] | None = field(
         init=False, default=None, repr=False
     )
 
@@ -115,7 +121,7 @@ class PieceRustIterator:
 
     def __next__(self) -> PieceInSquare:
         if self._it is None:
-            raise TypeError("Iterator not initialized. Call iter() first.")
+            raise IteratorNotInitializedError
         square, piece, color = next(self._it)
         return PieceInSquare(square=square, piece=piece, color=bool(color))
 

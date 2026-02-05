@@ -3,8 +3,9 @@ Interface for a chess board.
 """
 
 import typing
+from collections.abc import Iterator, Sequence
 from dataclasses import asdict
-from typing import Any, Iterator, Protocol, Self, Sequence
+from typing import Any, Protocol, Self
 
 import chess
 import valanga
@@ -26,6 +27,11 @@ BoardKeyWithoutCounters = tuple[
     int, int, int, int, int, int, bool, int, int | None, int, int, int
 ]
 
+class BoardInvariantError(RuntimeError):
+    def __init__(self) -> None:
+        super().__init__(
+            "internal error: inconsistent legal-moves / UCI relation in boards object"
+        )
 
 class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
     """Protocol for a legal move generator that yields move keys."""
@@ -162,10 +168,7 @@ class IBoard(Protocol):
             if self.legal_moves.get_uci_from_move_key(i) == move_uci:
                 return i
 
-        raise KeyError(
-            "the code should not have reached this point: problem with"
-            " legal moves / uci relation in boards object it seems"
-        )
+        raise BoardInvariantError
 
     def play_move_key(self, move: MoveKey) -> BoardModificationP | None:
         """Plays the move corresponding to the given move key.
