@@ -20,7 +20,7 @@ class StartingPositionArgs(Protocol):
     """Dataclass representing the base class for starting position arguments."""
 
     def get_fen(self) -> str:
-        """Returns the FEN (Forsyth-Edwards Notation) string representing the current state of the chess board.
+        """Return the FEN (Forsyth-Edwards Notation) string representing the current state of the chess board.
 
         Returns:
             str: The FEN string of the current board position.
@@ -37,7 +37,7 @@ class FenStartingPositionArgs:
     fen: str
 
     def get_fen(self) -> str:
-        """Returns the FEN (Forsyth-Edwards Notation) string representing the current state of the chess board.
+        """Return the FEN (Forsyth-Edwards Notation) string representing the current state of the chess board.
 
         Returns:
             str: The FEN string of the current board position.
@@ -54,7 +54,7 @@ class FileStartingPositionArgs(StartingPositionArgs):
     file_name: str
 
     def get_fen(self) -> str:
-        """Returns the FEN (Forsyth-Edwards Notation) string representing the current state of the chess board.
+        """Return the FEN (Forsyth-Edwards Notation) string representing the current state of the chess board.
 
         Returns:
             str: The FEN string of the current board position.

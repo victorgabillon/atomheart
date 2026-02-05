@@ -18,6 +18,7 @@ class EmptyFenError(FenError):
     """Raised when a FEN string is empty."""
 
     def __init__(self) -> None:
+        """Initialize the empty FEN error."""
         super().__init__("empty fen")
 
 
@@ -25,6 +26,7 @@ class InvalidFenTurnError(FenError):
     """Raised when the turn part of a FEN string is invalid."""
 
     def __init__(self, fen: str) -> None:
+        """Initialize the invalid turn error with the offending FEN."""
         super().__init__(f"expected 'w' or 'b' for turn part of fen: {fen!r}")
 
 
@@ -58,8 +60,9 @@ class FenPlusMoveHistory:
 
 @dataclass
 class FenPlusHistory:
-    """FenPlusHistory dataclass to hold a FEN string, subsequent moves in UCI format
-    and historical board states.
+    """FenPlusHistory dataclass to hold a FEN string.
+
+    This stores subsequent moves in UCI format and historical board states.
     """
 
     current_fen: Fen
@@ -69,7 +72,7 @@ class FenPlusHistory:
     )
 
     def current_turn(self) -> chess.Color:
-        """Returns the color of the player to move."""
+        """Return the color of the player to move."""
         # copy of some code in the chess python library that cannot be easily extracted or called directly
         parts = self.current_fen.split()
 

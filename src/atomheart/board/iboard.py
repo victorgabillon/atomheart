@@ -29,6 +29,7 @@ class BoardInvariantError(RuntimeError):
     """Raised when there is an invariant error in the board, such as an inconsistent legal moves / UCI relation."""
 
     def __init__(self) -> None:
+        """Initialize the board invariant error."""
         super().__init__(
             "internal error: inconsistent legal-moves / UCI relation in boards object"
         )
@@ -41,19 +42,19 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
 
     @property
     def all_generated_keys(self) -> Sequence[MoveKey] | None:
-        """Returns a sequence of all generated move keys, or None if not available."""
+        """Return a sequence of all generated move keys, or None if not available."""
         ...
 
     def __iter__(self) -> Iterator[MoveKey]:
-        """Returns an iterator over the legal move keys."""
+        """Return an iterator over the legal move keys."""
         ...
 
     def __next__(self) -> MoveKey:
-        """Returns the next legal move key."""
+        """Return the next legal move key."""
         ...
 
     def more_than_one(self) -> bool:
-        """Checks if there is more than one legal move available.
+        """Check if there is more than one legal move available.
 
         Returns:
             bool: True if there is more than one legal move, False otherwise.
@@ -62,11 +63,11 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
         ...
 
     def get_all(self) -> Sequence[MoveKey]:
-        """Returns a list of all legal move keys."""
+        """Return a list of all legal move keys."""
         ...
 
     def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
-        """Returns the UCI string corresponding to the given move key.
+        """Return the UCI string corresponding to the given move key.
 
         Args:
             move_key (MoveKey): The move key to convert to UCI.
@@ -78,7 +79,7 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
         ...
 
     def copy_with_reset(self) -> Self:
-        """Creates a copy of the legal move generator with an optional reset of generated moves.
+        """Create a copy of the legal move generator with an optional reset of generated moves.
 
         Returns:
             Self: A new instance of the legal move generator with the specified generated moves.
@@ -88,7 +89,7 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
 
     @property
     def fen(self) -> Fen:
-        """Returns the FEN string representation of the board."""
+        """Return the FEN string representation of the board."""
         ...
 
 
@@ -108,7 +109,7 @@ def compute_key(
     fullmove_number: int,
     halfmove_clock: int,
 ) -> BoardKey:
-    """Computes and returns a unique key representing the current state of the chess board.
+    """Compute and return a unique key representing the current state of the chess board.
 
     The key is computed by concatenating various attributes of the board, including the positions of pawns, knights,
     bishops, rooks, queens, and kings, as well as the current turn, castling rights, en passant square, halfmove clock,
@@ -152,7 +153,7 @@ class IBoard(Protocol):
     fast_representation_: BoardKey
 
     def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
-        """Returns the UCI string corresponding to the given move key.
+        """Return the UCI string corresponding to the given move key.
 
         Args:
             move_key (MoveKey): The move key to convert to UCI.
@@ -164,7 +165,7 @@ class IBoard(Protocol):
         return self.legal_moves.get_uci_from_move_key(move_key)
 
     def get_move_key_from_uci(self, move_uci: MoveUci) -> MoveKey:
-        """Returns the move key corresponding to the given UCI string.
+        """Return the move key corresponding to the given UCI string.
 
         Args:
             move_uci (moveUci): The UCI string to convert to a move key.
@@ -232,7 +233,7 @@ class IBoard(Protocol):
         ...
 
     def ply(self) -> int:
-        """Returns the number of half-moves (plies) that have been played on the board.
+        """Return the number of half-moves (plies) that have been played on the board.
 
         :return: The number of half-moves played on the board.
         :rtype: int
@@ -337,19 +338,19 @@ class IBoard(Protocol):
         ...
 
     def occupied_color(self, color: chess.Color) -> chess.Bitboard:
-        """Returns the bitboard representing the occupied squares for the given color."""
+        """Return the bitboard representing the occupied squares for the given color."""
         ...
 
     def result(self, claim_draw: bool = False) -> str:
-        """Returns the result of the game as a string."""
+        """Return the result of the game as a string."""
         ...
 
     def termination(self) -> chess.Termination | None:
-        """Returns the termination status of the game."""
+        """Return the termination status of the game."""
         ...
 
     def dump(self, file: Any) -> None:
-        """Dumps the current board state to a file in YAML format.
+        """Dump the current board state to a file in YAML format.
 
         Args:
             file (Any): The file object to write the board state to.
@@ -430,29 +431,29 @@ class IBoard(Protocol):
         return self.legal_moves
 
     def number_of_pieces_on_the_board(self) -> int:
-        """Returns the number of pieces currently on the board."""
+        """Return the number of pieces currently on the board."""
         ...
 
     def piece_map(self) -> dict[chess.Square, tuple[chess.PieceType, chess.Color]]:
-        """Returns a mapping from squares to pieces on the board."""
+        """Return a mapping from squares to pieces on the board."""
         ...
 
     def has_kingside_castling_rights(self, color: chess.Color) -> bool:
-        """Returns whether the given color has kingside castling rights."""
+        """Return whether the given color has kingside castling rights."""
         ...
 
     def has_queenside_castling_rights(self, color: chess.Color) -> bool:
-        """Returns whether the given color has queenside castling rights."""
+        """Return whether the given color has queenside castling rights."""
         ...
 
     def print_chess_board(self) -> str:
-        """Returns a string representation of the chess board."""
+        """Return a string representation of the chess board."""
         ...
 
     def tell_result(self) -> None:
-        """Prints the result of the game."""
+        """Print the result of the game."""
         ...
 
     def into_fen_plus_history(self) -> FenPlusHistory:
-        """Converts the current board state into a FenPlusHistory object."""
+        """Convert the current board state into a FenPlusHistory object."""
         ...

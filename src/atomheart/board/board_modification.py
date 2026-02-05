@@ -8,7 +8,10 @@ import chess
 
 
 class IteratorNotInitializedError(TypeError):
+    """Raise when a piece iterator is used before initialization."""
+
     def __init__(self) -> None:
+        """Initialize the iterator error message."""
         super().__init__("Iterator not initialized. Call iter() first.")
 
 
@@ -60,7 +63,7 @@ class BoardModification:
     appearances_: set[PieceInSquare] = field(default_factory=_piece_set)
 
     def add_appearance(self, appearance: PieceInSquare) -> None:
-        """Adds a piece appearance to the board modification.
+        """Add a piece appearance to the board modification.
 
         Args:
             appearance: The PieceInSquare object representing the appearance to add.
@@ -69,7 +72,7 @@ class BoardModification:
         self.appearances_.add(appearance)
 
     def add_removal(self, removal: PieceInSquare) -> None:
-        """Adds a piece removal to the board modification.
+        """Add a piece removal to the board modification.
 
         Args:
             removal: The PieceInSquare object representing the removal to add.
@@ -112,10 +115,12 @@ class PieceRustIterator:
     )
 
     def __iter__(self) -> "PieceRustIterator":
+        """Initialize iteration over the stored Rust tuples."""
         self._it = iter(self.items_)
         return self
 
     def __next__(self) -> PieceInSquare:
+        """Return the next piece-in-square entry from the iterator."""
         if self._it is None:
             raise IteratorNotInitializedError
         square, piece, color = next(self._it)
@@ -172,7 +177,7 @@ def compute_modifications(
     new_occupied_white: chess.Bitboard,
     new_occupied_black: chess.Bitboard,
 ) -> BoardModification:  # pylint: disable=all
-    """Computes the board modifications between two board states.
+    """Compute the board modifications between two board states.
 
     Args:
         previous_pawns (chess.Bitboard): Previous pawns bitboard.
