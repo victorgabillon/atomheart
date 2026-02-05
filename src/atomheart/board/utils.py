@@ -16,12 +16,14 @@ class FenError(ValueError):
 
 class EmptyFenError(FenError):
     """Raised when a FEN string is empty."""
+
     def __init__(self) -> None:
         super().__init__("empty fen")
 
 
 class InvalidFenTurnError(FenError):
     """Raised when the turn part of a FEN string is invalid."""
+
     def __init__(self, fen: str) -> None:
         super().__init__(f"expected 'w' or 'b' for turn part of fen: {fen!r}")
 
@@ -40,9 +42,7 @@ def _board_states_factory() -> list[chess._BoardState]:  # pyright: ignore[repor
 
 @dataclass
 class FenPlusMoves:
-    """
-    FenPlusMoves dataclass to hold a FEN string and subsequent moves.
-    """
+    """FenPlusMoves dataclass to hold a FEN string and subsequent moves."""
 
     original_fen: Fen
     subsequent_moves: list[chess.Move] = field(default_factory=_moves_factory)
@@ -50,9 +50,7 @@ class FenPlusMoves:
 
 @dataclass
 class FenPlusMoveHistory:
-    """
-    FenPlusMoveHistory dataclass to hold a FEN string and subsequent moves in UCI format.
-    """
+    """FenPlusMoveHistory dataclass to hold a FEN string and subsequent moves in UCI format."""
 
     current_fen: Fen
     historical_moves: list[MoveUci] = field(default_factory=_uci_factory)
@@ -60,9 +58,9 @@ class FenPlusMoveHistory:
 
 @dataclass
 class FenPlusHistory:
+    """FenPlusHistory dataclass to hold a FEN string, subsequent moves in UCI format
+    and historical board states.
     """
-    FenPlusHistory dataclass to hold a FEN string, subsequent moves in UCI format
-    and historical board states."""
 
     current_fen: Fen
     historical_moves: list[MoveUci] = field(default_factory=_uci_factory)

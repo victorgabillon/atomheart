@@ -1,6 +1,4 @@
-"""
-Utilities for move UCI representation.
-"""
+"""Utilities for move UCI representation."""
 
 from typing import Annotated
 

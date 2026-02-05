@@ -1,6 +1,4 @@
-"""
-Defines the IMove interface for chess moves.
-"""
+"""Defines the IMove interface for chess moves."""
 
 from abc import abstractmethod
 from typing import Annotated, Protocol
@@ -16,6 +14,7 @@ class IMove(Protocol):
 
     Args:
         Protocol (Protocol): Protocol for type checking.
+
     """
 
     @abstractmethod

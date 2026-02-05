@@ -39,8 +39,7 @@ class ValangaChessState(valanga.State):
         return self.board.play_move_key(cast("MoveKey", branch_key))
 
     def __getattr__(self, name: str) -> Any:
-        """
-        Delegate unknown attributes/methods to the underlying board.
+        """Delegate unknown attributes/methods to the underlying board.
         Called only if `name` wasn't found on the wrapper itself.
         """
         return getattr(self.board, name)
@@ -50,6 +49,7 @@ class ValangaChessState(valanga.State):
 
         Returns:
             str: A pretty-printed string representation of the content.
+
         """
         return self.board.print_chess_board()
 

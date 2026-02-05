@@ -1,6 +1,4 @@
-"""
-init file for board module
-"""
+"""init file for board module."""
 
 from .board_chi import BoardChi
 from .board_modification import BoardModification, BoardModificationP

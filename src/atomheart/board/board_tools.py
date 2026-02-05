@@ -2,8 +2,7 @@
 
 
 def convert_line[AnyStr: (bytes, str)](line: AnyStr, index: int) -> str:
-    """
-    Convert a line of the ascii board to a FEN string.
+    """Convert a line of the ascii board to a FEN string.
 
     Args:
         line (AnyStr): The line of the ascii board.
@@ -11,6 +10,7 @@ def convert_line[AnyStr: (bytes, str)](line: AnyStr, index: int) -> str:
 
     Returns:
         str: The converted FEN string.
+
     """
     if len(line) == 0:
         return ""
@@ -25,12 +25,14 @@ def convert_line[AnyStr: (bytes, str)](line: AnyStr, index: int) -> str:
 
 
 def convert_to_fen(ascii_board: str | bytes) -> str:
-    """
-    Convert an ascii board to a FEN string.
+    """Convert an ascii board to a FEN string.
+
     Args:
         ascii_board (str | bytes): The ascii board.
+
     Returns:
         str: The converted FEN string.
+
     """
     # Handle bytes input by converting to string
     if isinstance(ascii_board, bytes):

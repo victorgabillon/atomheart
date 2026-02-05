@@ -1,6 +1,4 @@
-"""
-Module to create a chess board.
-"""
+"""Module to create a chess board."""
 
 from collections import Counter
 from functools import partial
@@ -61,6 +59,7 @@ def create_board(
 
     Returns:
         IBoard: The created chess board.
+
     """
     board_factory: BoardFactory = create_board_factory(
         use_rust_boards=use_rust_boards,
@@ -76,14 +75,15 @@ def create_board_chi_from_pychess_board(
     use_board_modification: bool = False,
     sort_legal_moves: bool = False,
 ) -> BoardChi:
-    """
-    Create a chipiron chess board from a pychess board.
+    """Create a chipiron chess board from a pychess board.
+
     Args:
         chess_board (chess.Board): The pychess board to convert.
         use_board_modification (bool): whether to use the board modification
         sort_legal_moves (bool): whether to sort legal moves
     Returns:
         BoardChi: The created chess board.
+
     """
     board_key_representation: BoardKey = compute_key(
         pawns=chess_board.pawns,
@@ -120,8 +120,7 @@ def create_board_chi(
     use_board_modification: bool = False,
     sort_legal_moves: bool = False,
 ) -> BoardChi:
-    """
-    Create a chipiron chess board.
+    """Create a chipiron chess board.
 
     Args:
         use_board_modification (bool): whether to use the board modification
@@ -160,8 +159,7 @@ def create_rust_board(
     use_board_modification: bool = False,
     sort_legal_moves: bool = False,
 ) -> RustyBoardChi:
-    """
-    Create a rust chess board.
+    """Create a rust chess board.
 
     Args:
         use_board_modification (bool): whether to use the board modification

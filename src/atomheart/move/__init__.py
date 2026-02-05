@@ -1,6 +1,4 @@
-"""
-Initialization for the move module.
-"""
+"""Initialization for the move module."""
 
 from .imove import IMove
 from .rust_move import RustMove

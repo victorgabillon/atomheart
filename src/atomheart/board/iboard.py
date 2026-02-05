@@ -1,6 +1,4 @@
-"""
-Interface for a chess board.
-"""
+"""Interface for a chess board."""
 
 import typing
 from collections.abc import Iterator, Sequence
@@ -28,6 +26,8 @@ BoardKeyWithoutCounters = tuple[
 ]
 
 class BoardInvariantError(RuntimeError):
+    """Raised when there is an invariant error in the board, such as an inconsistent legal moves / UCI relation."""
+
     def __init__(self) -> None:
         super().__init__(
             "internal error: inconsistent legal-moves / UCI relation in boards object"
@@ -57,6 +57,7 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
 
         Returns:
             bool: True if there is more than one legal move, False otherwise.
+
         """
         ...
 
@@ -66,10 +67,14 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
 
     def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
         """Returns the UCI string corresponding to the given move key.
+
         Args:
             move_key (MoveKey): The move key to convert to UCI.
+
         Returns:
-            moveUci: The UCI string corresponding to the given move key."""
+            moveUci: The UCI string corresponding to the given move key.
+
+        """
         ...
 
     def copy_with_reset(self) -> Self:
@@ -77,6 +82,7 @@ class LegalMoveKeyGeneratorP(valanga.BranchKeyGeneratorP[MoveKey], Protocol):
 
         Returns:
             Self: A new instance of the legal move generator with the specified generated moves.
+
         """
         ...
 
@@ -102,15 +108,16 @@ def compute_key(
     fullmove_number: int,
     halfmove_clock: int,
 ) -> BoardKey:
-    """
-    Computes and returns a unique key representing the current state of the chess board.
+    """Computes and returns a unique key representing the current state of the chess board.
 
     The key is computed by concatenating various attributes of the board, including the positions of pawns, knights,
     bishops, rooks, queens, and kings, as well as the current turn, castling rights, en passant square, halfmove clock,
     occupied squares for each color, promoted pieces, and the fullmove number.
     It is faster than calling the fen.
+
     Returns:
         str: A unique key representing the current state of the chess board.
+
     """
     string: BoardKey = (
         pawns,
@@ -146,20 +153,28 @@ class IBoard(Protocol):
 
     def get_uci_from_move_key(self, move_key: MoveKey) -> MoveUci:
         """Returns the UCI string corresponding to the given move key.
+
         Args:
             move_key (MoveKey): The move key to convert to UCI.
+
         Returns:
-            moveUci: The UCI string corresponding to the given move key."""
+            moveUci: The UCI string corresponding to the given move key.
+
+        """
         return self.legal_moves.get_uci_from_move_key(move_key)
 
     def get_move_key_from_uci(self, move_uci: MoveUci) -> MoveKey:
         """Returns the move key corresponding to the given UCI string.
+
         Args:
             move_uci (moveUci): The UCI string to convert to a move key.
+
         Returns:
             MoveKey: The move key corresponding to the given UCI string.
-            Raises:
+
+        Raises:
                 KeyError: If the UCI string is not found in the legal moves.
+
         """
         number_moves: int = len(self.legal_moves.get_all())
         i: int
@@ -172,27 +187,36 @@ class IBoard(Protocol):
 
     def play_move_key(self, move: MoveKey) -> BoardModificationP | None:
         """Plays the move corresponding to the given move key.
+
         Args:
             move (MoveKey): The move key to play.
+
         Returns:
             BoardModificationP | None: The result of the move, or None if the move is illegal.
+
         """
         ...
 
     def play_move_uci(self, move_uci: MoveUci) -> BoardModificationP | None:
         """Plays the move corresponding to the given UCI string.
+
         Args:
             move_uci (moveUci): The UCI string to play.
+
         Returns:
             BoardModificationP | None: The result of the move, or None if the move is illegal.
+
         """
         ...
 
     @property
     def fen(self) -> Fen:
         """Returns the FEN string representation of the board.
+
         Returns:
-            fen: The FEN string representation of the board."""
+            fen: The FEN string representation of the board.
+
+        """
         ...
 
     @property
@@ -200,14 +224,15 @@ class IBoard(Protocol):
         self,
     ) -> list[MoveUci]:
         """Returns the move history stack.
+
         Returns:
             list[moveUci]: The move history stack.
+
         """
         ...
 
     def ply(self) -> int:
-        """
-        Returns the number of half-moves (plies) that have been played on the board.
+        """Returns the number of half-moves (plies) that have been played on the board.
 
         :return: The number of half-moves played on the board.
         :rtype: int
@@ -216,17 +241,16 @@ class IBoard(Protocol):
 
     @property
     def turn(self) -> valanga.Color:
-        """
-        Get the current turn color.
+        """Get the current turn color.
 
         Returns:
             chess.Color: The color of the current turn.
+
         """
         ...
 
     def copy(self, stack: bool, deep_copy_legal_moves: bool = True) -> Self:
-        """
-        Create a copy of the current board.
+        """Create a copy of the current board.
 
         Args:
             stack (bool): Whether to copy the move stack as well.
@@ -234,15 +258,16 @@ class IBoard(Protocol):
 
         Returns:
             BoardChi: A new instance of the BoardChi class with the copied board.
+
         """
         ...
 
     def is_game_over(self) -> bool:
-        """
-        Check if the game is over.
+        """Check if the game is over.
 
         Returns:
             bool: True if the game is over, False otherwise.
+
         """
         ...
 
@@ -325,8 +350,10 @@ class IBoard(Protocol):
 
     def dump(self, file: Any) -> None:
         """Dumps the current board state to a file in YAML format.
+
         Args:
             file (Any): The file object to write the board state to.
+
         """
         # create minimal info for reconstruction that is the class FenPlusMoveHistory
 
@@ -344,8 +371,7 @@ class IBoard(Protocol):
 
     @property
     def tag(self) -> BoardKey:
-        """
-        Returns a fast representation of the board.
+        """Returns a fast representation of the board.
 
         This method computes and returns a string representation of the board
         that can be quickly generated and used for various purposes.
@@ -357,8 +383,7 @@ class IBoard(Protocol):
 
     @property
     def fast_representation_without_counters(self) -> BoardKeyWithoutCounters:
-        """
-        Returns a fast representation of the board.
+        """Returns a fast representation of the board.
 
         This method computes and returns a string representation of the board
         that can be quickly generated and used for various purposes.
@@ -377,6 +402,7 @@ class IBoard(Protocol):
 
         Returns:
             bool: True if the move is a zeroing move, False otherwise.
+
         """
         ...
 
@@ -388,6 +414,7 @@ class IBoard(Protocol):
 
         Returns:
             bool: True if the color is attacked, False otherwise.
+
         """
         ...
 

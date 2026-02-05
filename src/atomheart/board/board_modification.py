@@ -1,6 +1,4 @@
-"""
-Module that contains the BoardModification class
-"""
+"""Module that contains the BoardModification class."""
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field
@@ -16,9 +14,7 @@ class IteratorNotInitializedError(TypeError):
 
 @dataclass(frozen=True)
 class PieceInSquare:
-    """
-    Represents a piece on a chessboard square.
-    """
+    """Represents a piece on a chessboard square."""
 
     square: chess.Square
     piece: chess.PieceType
@@ -26,9 +22,7 @@ class PieceInSquare:
 
 
 class BoardModificationP(Protocol):
-    """
-    Represents a modification to a chessboard resulting from a move.
-    """
+    """Represents a modification to a chessboard resulting from a move."""
 
     @property
     def removals(self) -> Iterator[PieceInSquare]:
@@ -36,6 +30,7 @@ class BoardModificationP(Protocol):
 
         Yields:
             Iterator[PieceInSquare]: An iterator over the piece removals.
+
         """
         ...
 
@@ -48,6 +43,7 @@ class BoardModificationP(Protocol):
 
         Yields:
             Iterator[PieceInSquare]: An iterator over the piece appearances.
+
         """
         ...
 
@@ -58,28 +54,26 @@ def _piece_set() -> set[PieceInSquare]:
 
 @dataclass
 class BoardModification:
-    """
-    Represents a modification to a chessboard resulting from a move.
-    """
+    """Represents a modification to a chessboard resulting from a move."""
 
     removals_: set[PieceInSquare] = field(default_factory=_piece_set)
     appearances_: set[PieceInSquare] = field(default_factory=_piece_set)
 
     def add_appearance(self, appearance: PieceInSquare) -> None:
-        """
-        Adds a piece appearance to the board modification.
+        """Adds a piece appearance to the board modification.
 
         Args:
             appearance: The PieceInSquare object representing the appearance to add.
+
         """
         self.appearances_.add(appearance)
 
     def add_removal(self, removal: PieceInSquare) -> None:
-        """
-        Adds a piece removal to the board modification.
+        """Adds a piece removal to the board modification.
 
         Args:
             removal: The PieceInSquare object representing the removal to add.
+
         """
         self.removals_.add(removal)
 
@@ -89,6 +83,7 @@ class BoardModification:
 
         Returns:
             Iterator[PieceInSquare]: An iterator over the piece removals.
+
         """
         return iter(self.removals_)
 
@@ -98,6 +93,7 @@ class BoardModification:
 
         Returns:
             Iterator[PieceInSquare]: An iterator over the piece appearances.
+
         """
         return iter(self.appearances_)
 
@@ -132,9 +128,7 @@ def _rust_tuple_set() -> set[tuple[int, int, int]]:
 
 @dataclass
 class BoardModificationRust:
-    """
-    Represents a modification to a chessboard resulting from a move.
-    """
+    """Represents a modification to a chessboard resulting from a move."""
 
     removals_: set[tuple[int, int, int]] = field(default_factory=_rust_tuple_set)
     appearances_: set[tuple[int, int, int]] = field(default_factory=_rust_tuple_set)
@@ -142,8 +136,10 @@ class BoardModificationRust:
     @property
     def removals(self) -> Iterator[PieceInSquare]:
         """Yields all piece removals from the board modification.
+
         Returns:
             Iterator[PieceInSquare]: An iterator over the piece removals.
+
         """
         return PieceRustIterator(self.removals_)
 
@@ -153,6 +149,7 @@ class BoardModificationRust:
 
         Returns:
             Iterator[PieceInSquare]: An iterator over the piece appearances.
+
         """
         return PieceRustIterator(self.appearances_)
 
@@ -176,6 +173,7 @@ def compute_modifications(
     new_occupied_black: chess.Bitboard,
 ) -> BoardModification:  # pylint: disable=all
     """Computes the board modifications between two board states.
+
     Args:
         previous_pawns (chess.Bitboard): Previous pawns bitboard.
         previous_kings (chess.Bitboard): Previous kings bitboard.
@@ -193,8 +191,10 @@ def compute_modifications(
         new_knights (chess.Bitboard): New knights bitboard.
         new_occupied_white (chess.Bitboard): New occupied white squares bitboard.
         new_occupied_black (chess.Bitboard): New occupied black squares bitboard.
+
     Returns:
         BoardModification: The computed board modifications.
+
     """
     board_modifications: BoardModification = BoardModification()
     hop = [

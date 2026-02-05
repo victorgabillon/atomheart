@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=80.9.0", "wheel"]
+requires = ["setuptools>=80.10.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -20,7 +20,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     # Testing dependencies
-    "pytest>=8.4.1",
+    "pytest>=9.0.2",
     "coverage",
     "pytest-cov>=6.0.0"
 ]
@@ -119,15 +119,18 @@ line-length = 88
 target-version = "py313"
 
 # Enable import sorting (alphabetical + group order)
-lint.select = ["I", "F", "E", "B", "TCH","UP","SIM", "RUF","RET",
-"ANN", "PERF", "TRY","LOG","RSE",
+lint.select = ["I", "F", "E", "B", "TCH","UP","SIM", "RUF","RET","N","A",
+"ANN", "PERF", "TRY","LOG","RSE","ICN","TID","Q","W","D",
 "ISC","PIE","ERA","TD"]  # I = imports, F = pyflakes, E = pycodestyle, TCH = type-checking, B = black
 
 # Allow auto-fixing for imports and type-checking imports
-lint.fixable = ["I", "TCH", "F401","UP","SIM","RET","RUF","ERA"]
+lint.fixable = ["I", "TCH", "F401","UP","SIM","RET","RUF","ERA","D"]
 
 # Ignore rules you don't care about
-lint.ignore = [ "E501","PLR0913","ANN401"]
+lint.ignore = [ "E501","PLR0913","ANN401",
+    "D203",  # incompatible with D211
+    "D213",  # incompatible with D212
+]
 
 # Optional: add your first-party package to extend the known group
 [tool.ruff.lint.per-file-ignores]
@@ -193,7 +196,7 @@ package = "skip"
 deps = [
   # runtime deps (match [project].dependencies)
   "rich",
-  "valanga",
+  "valanga>=0.1.14",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",
@@ -216,7 +219,7 @@ package = "skip"
 deps = [
   # runtime deps
   "rich",
-  "valanga",
+  "valanga>=0.1.14",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",
