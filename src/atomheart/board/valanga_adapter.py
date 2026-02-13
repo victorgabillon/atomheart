@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 import valanga
+from valanga.over_event import HowOver, Winner
 
 if TYPE_CHECKING:
     import chess
@@ -83,23 +84,23 @@ class ChessDynamics(valanga.Dynamics[ChessState]):
 def _over_event_from_board(board: "IBoard") -> valanga.OverEvent:
     """Convert board end-of-game info into a Valanga over event."""
     result = board.result(claim_draw=True)
-    termination: "chess.Termination | None" = board.termination()
+    termination: chess.Termination | None = board.termination()
 
     if result == "1-0":
-        return valanga.OverEvent(valanga.HowOver.WIN, valanga.Winner.WHITE, termination)
+        return valanga.OverEvent(HowOver.WIN, Winner.WHITE, termination)
 
     if result == "0-1":
-        return valanga.OverEvent(valanga.HowOver.WIN, valanga.Winner.BLACK, termination)
+        return valanga.OverEvent(HowOver.WIN, Winner.BLACK, termination)
 
     if result == "1/2-1/2":
         return valanga.OverEvent(
-            valanga.HowOver.DRAW,
-            valanga.Winner.NO_KNOWN_WINNER,
+            HowOver.DRAW,
+            Winner.NO_KNOWN_WINNER,
             termination,
         )
 
     return valanga.OverEvent(
-        valanga.HowOver.DO_NOT_KNOW_OVER,
-        valanga.Winner.NO_KNOWN_WINNER,
+        HowOver.DO_NOT_KNOW_OVER,
+        Winner.NO_KNOWN_WINNER,
         termination,
     )
