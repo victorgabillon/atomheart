@@ -68,7 +68,8 @@ class ChessDynamics(valanga.Dynamics[ChessState]):
             over_event=over_event,
             info={
                 "result": board2.result(claim_draw=True) if is_over else "*",
-                "termination": board2.termination(),
+                # Only compute termination when game is over; otherwise it may assert.
+                "termination": board2.termination() if is_over else None,
             },
         )
 
