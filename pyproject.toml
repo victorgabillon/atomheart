@@ -124,7 +124,7 @@ lint.select = ["I", "F", "E", "B", "TCH","UP","SIM", "RUF","RET","N","A",
 "ISC","PIE","ERA","TD"]  # I = imports, F = pyflakes, E = pycodestyle, TCH = type-checking, B = black
 
 # Allow auto-fixing for imports and type-checking imports
-lint.fixable = ["I", "TCH", "F401","UP","SIM","RET","RUF","ERA","D"]
+lint.fixable = ["I", "TCH", "F401","UP","SIM","RET","RUF","ERA","D","W"]
 
 # Ignore rules you don't care about
 lint.ignore = [ "E501","PLR0913","ANN401",
