@@ -426,7 +426,7 @@ class IBoard(Protocol):
         """Returns the legal moves generator."""
         ...
 
-    # to comply with anemone interface for State (seems hacky but avoid to create another wrapper for now)
+    # Legacy compatibility shim with older valanga/anemone state interfaces.
     @property
     def branch_keys(self) -> LegalMoveKeyGeneratorP:
         """Returns the legal moves generator."""
