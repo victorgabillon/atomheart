@@ -17,12 +17,12 @@ from atomheart.games.checkers.geometry import (
 from atomheart.games.checkers.move import is_capture
 from atomheart.games.checkers.reversible import CheckersReversibleDynamics
 from atomheart.games.checkers.rules import CheckersRules
-from atomheart.games.checkers.state import CheckersState, initial_state
+from atomheart.games.checkers.state import CheckersState
 
 
 def test_initial_position_has_legal_moves() -> None:
     """Initial position should generate non-empty legal moves for white."""
-    moves = generate_legal_moves(initial_state(), CheckersRules())
+    moves = generate_legal_moves(CheckersState.standard(), CheckersRules())
     assert len(moves) > 0
 
 
