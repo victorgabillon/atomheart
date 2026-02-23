@@ -4,7 +4,7 @@ from .dynamics import CheckersDynamics
 from .move import CheckersMoveGenerator, MoveKey, move_name
 from .reversible import CheckersReversibleDynamics, CheckersUndo
 from .rules import CheckersRules
-from .state import CheckersState, initial_state
+from .state import CheckersState
 
 __all__ = [
     "CheckersDynamics",
@@ -14,6 +14,5 @@ __all__ = [
     "CheckersState",
     "CheckersUndo",
     "MoveKey",
-    "initial_state",
     "move_name",
 ]
