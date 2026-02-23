@@ -8,6 +8,8 @@ from typing import cast
 import valanga
 from valanga.over_event import HowOver, Winner
 
+from .apply import apply_move
+from .generation import generate_legal_moves
 from .move import CheckersMoveGenerator, MoveKey, move_name
 from .rules import CheckersRules
 from .state import CheckersState
@@ -15,40 +17,43 @@ from .state import CheckersState
 
 @dataclass(slots=True)
 class CheckersDynamics(valanga.Dynamics[CheckersState]):
-    """Protocol-correct scaffold dynamics for checkers."""
+    """Checkers dynamics with legal move generation and state transitions."""
 
     rules: CheckersRules = field(default_factory=CheckersRules)
 
     def legal_actions(
         self, state: CheckersState
     ) -> valanga.BranchKeyGeneratorP[MoveKey]:
-        """Return legal move keys for the state.
-
-        This scaffold intentionally returns an empty move list until move generation
-        is implemented.
-        """
-        _ = (state, self.rules)
-        return CheckersMoveGenerator([], sort_branch_keys=True)
+        """Return legal move keys for the state."""
+        moves = generate_legal_moves(state=state, rules=self.rules)
+        return CheckersMoveGenerator(moves, sort_branch_keys=True)
 
     def step(
         self, state: CheckersState, action: valanga.BranchKey
     ) -> valanga.Transition[CheckersState]:
-        """Apply an action and return a transition.
-
-        The current scaffold leaves board mutation unimplemented and returns the
-        original state. It still wires piece-exhaustion terminal over-event
-        semantics in a protocol-compliant way.
-        """
+        """Apply an action and return a transition."""
         move = self._as_move_key(action)
         next_state = self._apply_move(state, move)
 
-        is_over = next_state.is_game_over()
         over_event: valanga.OverEvent | None = None
-        if is_over:
+        is_over = False
+
+        if next_state.is_game_over():
+            is_over = True
             winner = (
                 Winner.BLACK if (next_state.wm | next_state.wk) == 0 else Winner.WHITE
             )
-            over_event = valanga.OverEvent(HowOver.WIN, winner, None)
+            over_event = valanga.OverEvent(HowOver.WIN, winner, "piece_exhaustion")
+        else:
+            next_moves = self.legal_actions(next_state).get_all()
+            if len(next_moves) == 0:
+                is_over = True
+                winner = (
+                    Winner.BLACK
+                    if next_state.turn == valanga.Color.WHITE
+                    else Winner.WHITE
+                )
+                over_event = valanga.OverEvent(HowOver.WIN, winner, "no_moves")
 
         return valanga.Transition(
             next_state=next_state,
@@ -78,11 +83,9 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
         if not isinstance(action, tuple) or len(action) != 4:  # pyright: ignore[reportUnknownArgumentType]
             raise TypeError("Checkers actions must be MoveKey tuples.")  # noqa: TRY003
 
-        # Cast to MoveKey after basic tuple structure validation
         move_key = cast("MoveKey", action)
         start_sq, landings, jumped, promotes = move_key
 
-        # Runtime validation of element types
         if not isinstance(start_sq, int):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("MoveKey start square must be int.")  # noqa: TRY003
         if not isinstance(landings, tuple) or not landings:  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -94,36 +97,20 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
         if not all(isinstance(jumped_sq, int) for jumped_sq in jumped):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("MoveKey jumped must contain ints.")  # noqa: TRY003
         if jumped and len(jumped) != len(landings):
-            raise TypeError(  # noqa: TRY003
+            raise TypeError(
                 "Capture MoveKey must satisfy len(jumped) == len(landings)."
             )
         if not jumped and len(landings) != 1:
-            raise TypeError("Quiet MoveKey must contain exactly one landing square.")  # noqa: TRY003
+            raise TypeError("Quiet MoveKey must contain exactly one landing square.")
         if len(set(jumped)) != len(jumped):
-            raise TypeError("Capture MoveKey cannot repeat jumped squares.")  # noqa: TRY003
+            raise TypeError("Capture MoveKey cannot repeat jumped squares.")
         if start_sq in landings:
-            raise TypeError("MoveKey start square cannot appear in landings.")  # noqa: TRY003
+            raise TypeError("MoveKey start square cannot appear in landings.")
         if not isinstance(promotes, bool):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise TypeError("MoveKey promote flag must be bool.")  # noqa: TRY003
+            raise TypeError("MoveKey promote flag must be bool.")
 
         return move_key
 
     def _apply_move(self, state: CheckersState, move: MoveKey) -> CheckersState:
-        """Apply a move and return the next state.
-
-        This placeholder only flips side to move. Piece updates are intentionally
-        left for the concrete move generator/bitboard implementation.
-        """
-        _ = move
-        return CheckersState(
-            wm=state.wm,
-            wk=state.wk,
-            bm=state.bm,
-            bk=state.bk,
-            turn=(
-                valanga.Color.BLACK
-                if state.turn == valanga.Color.WHITE
-                else valanga.Color.WHITE
-            ),
-            ply_since_capture_or_man_move=state.ply_since_capture_or_man_move + 1,
-        )
+        """Apply a move and return the next state."""
+        return apply_move(state=state, move=move, rules=self.rules)

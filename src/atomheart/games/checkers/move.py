@@ -6,14 +6,18 @@ Pattern B is used: move keys are structural and hashable.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from valanga import BranchKeyGeneratorP
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-MoveKey = tuple[int, tuple[int, ...], tuple[int, ...], bool]
+MoveKey: TypeAlias = tuple[int, tuple[int, ...], tuple[int, ...], bool]
+"""(start_sq, landings, jumped, promotes).
+
+`promotes` is True only when a man is crowned during this move.
+"""
 
 
 @dataclass(slots=True)
@@ -73,3 +77,13 @@ def move_name(move: MoveKey) -> str:
         path = f"{start_sq}-{landings[0]}"
 
     return f"{path}{'K' if promotes else ''}"
+
+
+def is_capture(move: MoveKey) -> bool:
+    """Return whether the move key represents a capture sequence."""
+    return len(move[2]) > 0
+
+
+def end_sq(move: MoveKey) -> int:
+    """Return the final landing square of a move key."""
+    return move[1][-1]

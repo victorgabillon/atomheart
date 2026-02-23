@@ -1,16 +1,27 @@
+from __future__ import annotations
+
 """Module to create a chess board."""
 
 from collections import Counter
 from functools import partial
-from typing import Protocol
+from importlib.util import find_spec
+from typing import TYPE_CHECKING, Protocol
 
 import chess
-import shakmaty_python_binding
 
 from .board_chi import BoardChi, LegalMoveKeyGenerator
 from .iboard import BoardKey, IBoard, compute_key
-from .rusty_board import LegalMoveKeyGeneratorRust, RustyBoardChi
 from .utils import Fen, FenPlusHistory
+
+_HAS_SHAKMATY_BINDING = find_spec("shakmaty_python_binding") is not None
+
+if _HAS_SHAKMATY_BINDING:
+    import shakmaty_python_binding
+    from .rusty_board import LegalMoveKeyGeneratorRust, RustyBoardChi
+
+if TYPE_CHECKING:
+    import shakmaty_python_binding
+    from .rusty_board import LegalMoveKeyGeneratorRust, RustyBoardChi
 
 
 class BoardFactory(Protocol):
@@ -169,6 +180,12 @@ def create_rust_board(
         RustyBoardChi: The created chess board.
 
     """
+    if not _HAS_SHAKMATY_BINDING:
+        raise ImportError(
+            "Rust board backend requires optional dependency "
+            "'shakmaty_python_binding'. Install atomheart[chess-rust]."
+        )
+
     current_fen: Fen
     chess_rust_binding: shakmaty_python_binding.MyChess
 
