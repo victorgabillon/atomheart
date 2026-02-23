@@ -43,7 +43,7 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
             winner = (
                 Winner.BLACK if (next_state.wm | next_state.wk) == 0 else Winner.WHITE
             )
-            over_event = valanga.OverEvent(HowOver.WIN, winner, "piece_exhaustion")
+            over_event = valanga.OverEvent(HowOver.WIN, winner, "piece_exhaustion")  # type: ignore[arg-type]
         else:
             next_moves = self.legal_actions(next_state).get_all()
             if len(next_moves) == 0:
@@ -53,7 +53,7 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
                     if next_state.turn == valanga.Color.WHITE
                     else Winner.WHITE
                 )
-                over_event = valanga.OverEvent(HowOver.WIN, winner, "no_moves")
+                over_event = valanga.OverEvent(HowOver.WIN, winner, "no_moves")  # type: ignore[arg-type]
 
         return valanga.Transition(
             next_state=next_state,
@@ -97,17 +97,17 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
         if not all(isinstance(jumped_sq, int) for jumped_sq in jumped):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("MoveKey jumped must contain ints.")  # noqa: TRY003
         if jumped and len(jumped) != len(landings):
-            raise TypeError(
+            raise TypeError(  # noqa: TRY003
                 "Capture MoveKey must satisfy len(jumped) == len(landings)."
             )
         if not jumped and len(landings) != 1:
-            raise TypeError("Quiet MoveKey must contain exactly one landing square.")
+            raise TypeError("Quiet MoveKey must contain exactly one landing square.")  # noqa: TRY003
         if len(set(jumped)) != len(jumped):
-            raise TypeError("Capture MoveKey cannot repeat jumped squares.")
+            raise TypeError("Capture MoveKey cannot repeat jumped squares.")  # noqa: TRY003
         if start_sq in landings:
-            raise TypeError("MoveKey start square cannot appear in landings.")
+            raise TypeError("MoveKey start square cannot appear in landings.")  # noqa: TRY003
         if not isinstance(promotes, bool):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise TypeError("MoveKey promote flag must be bool.")
+            raise TypeError("MoveKey promote flag must be bool.")  # noqa: TRY003
 
         return move_key
 

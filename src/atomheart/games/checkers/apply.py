@@ -1,6 +1,9 @@
 """Move application and validation for checkers states."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import valanga
 
@@ -13,9 +16,11 @@ from .geometry import (
     STEP_TABLES,
     WHITE_FORWARD_DIRECTIONS,
 )
-from .move import MoveKey
-from .rules import CheckersRules
 from .state import CheckersState
+
+if TYPE_CHECKING:
+    from .move import MoveKey
+    from .rules import CheckersRules
 
 
 def _dirs_for_piece(is_king: bool, turn: valanga.Color) -> tuple[str, ...]:
@@ -49,35 +54,35 @@ def _has_any_capture(
                 continue
             jumped_mask = bit(edge.jumped)
             landing_mask = bit(edge.landing)
-            if (occ_opp & jumped_mask) and not (occ_all & landing_mask):
+            if (occ_opp & jumped_mask) and not occ_all & landing_mask:
                 return True
     return False
 
 
-def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> None:
+def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> None:  # pylint: disable=too-many-branches,too-many-statements
     """Validate move geometry and occupancy against the current state."""
     start_sq, landings, jumped, promotes = move
 
     if len(landings) == 0:
-        raise ValueError("Move must contain at least one landing square.")
+        raise ValueError("Move must contain at least one landing square.")  # noqa: TRY003
     if len(jumped) == 0 and len(landings) != 1:
-        raise ValueError("Quiet move must have exactly one landing square.")
+        raise ValueError("Quiet move must have exactly one landing square.")  # noqa: TRY003
     if len(jumped) > 0 and len(jumped) != len(landings):
-        raise ValueError("Capture move must satisfy len(jumped) == len(landings).")
+        raise ValueError("Capture move must satisfy len(jumped) == len(landings).")  # noqa: TRY003
     if start_sq in landings:
-        raise ValueError("Move start square cannot appear in landings.")
+        raise ValueError("Move start square cannot appear in landings.")  # noqa: TRY003
     if len(set(jumped)) != len(jumped):
-        raise ValueError("Capture move cannot repeat jumped squares.")
+        raise ValueError("Capture move cannot repeat jumped squares.")  # noqa: TRY003
     if len(set(landings)) != len(landings):
-        raise ValueError("Move cannot repeat landing squares.")
+        raise ValueError("Move cannot repeat landing squares.")  # noqa: TRY003
 
-    if not (0 <= start_sq < 32):
-        raise ValueError(f"Invalid start square: {start_sq}.")
+    if not 0 <= start_sq < 32:
+        raise ValueError(f"Invalid start square: {start_sq}.")  # noqa: TRY003
 
-    if any(not (0 <= sq < 32) for sq in landings):
-        raise ValueError("All landing squares must be in range [0, 31].")
+    if any(not 0 <= sq < 32 for sq in landings):
+        raise ValueError("All landing squares must be in range [0, 31].")  # noqa: TRY003
     if any(not (0 <= sq < 32) for sq in jumped):
-        raise ValueError("All jumped squares must be in range [0, 31].")
+        raise ValueError("All jumped squares must be in range [0, 31].")  # noqa: TRY003
 
     if state.turn == valanga.Color.WHITE:
         own_men, own_kings = state.wm, state.wk
@@ -88,8 +93,8 @@ def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> 
 
     start_mask = bit(start_sq)
     moved_is_king = bool(own_kings & start_mask)
-    if not moved_is_king and not (own_men & start_mask):
-        raise ValueError(f"No side-to-move piece on start square {start_sq}.")
+    if not moved_is_king and not own_men & start_mask:
+        raise ValueError(f"No side-to-move piece on start square {start_sq}.")  # noqa: TRY003
 
     occ = own_men | own_kings | opp_men | opp_kings
     if len(jumped) == 0:
@@ -100,25 +105,24 @@ def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> 
             opp_kings=opp_kings,
             turn=state.turn,
         ):
-            raise ValueError("Capture is mandatory.")
+            raise ValueError("Capture is mandatory.")  # noqa: TRY003
 
         landing = landings[0]
         landing_mask = bit(landing)
         if occ & landing_mask:
-            raise ValueError("Quiet move destination must be empty.")
+            raise ValueError("Quiet move destination must be empty.")  # noqa: TRY003
 
         if not any(
             STEP_TABLES[direction][start_sq] == landing
             for direction in _dirs_for_piece(is_king=moved_is_king, turn=state.turn)
         ):
-            raise ValueError("Quiet move does not match legal step geometry.")
+            raise ValueError("Quiet move does not match legal step geometry.")  # noqa: TRY003
 
-        crowned = (
-            (not moved_is_king)
-            and ROW_OF_SQ32[landing] == _promotion_row(state.turn)
+        crowned = (not moved_is_king) and ROW_OF_SQ32[landing] == _promotion_row(
+            state.turn
         )
         if promotes != crowned:
-            raise ValueError(
+            raise ValueError(  # noqa: TRY003
                 "Move promote flag is inconsistent with quiet move landing."
             )
         return
@@ -133,10 +137,12 @@ def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> 
         jumped_mask = bit(jumped_sq)
         landing_mask = bit(landing_sq)
 
-        if not ((opp_men_now | opp_kings_now) & jumped_mask):
-            raise ValueError("Capture step jumped square must contain an opponent piece.")
+        if not (opp_men_now | opp_kings_now) & jumped_mask:
+            raise ValueError(  # noqa: TRY003
+                "Capture step jumped square must contain an opponent piece."
+            )
         if occ_now & landing_mask:
-            raise ValueError("Capture landing square must be empty when reached.")
+            raise ValueError("Capture landing square must be empty when reached.")  # noqa: TRY003
 
         matched = any(
             (
@@ -146,7 +152,7 @@ def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> 
             for direction in _dirs_for_piece(is_king=moved_is_king, turn=state.turn)
         )
         if not matched:
-            raise ValueError("Capture step does not match legal capture geometry.")
+            raise ValueError("Capture step does not match legal capture geometry.")  # noqa: TRY003
 
         curr_mask = bit(curr_sq)
         if moved_is_king:
@@ -165,7 +171,7 @@ def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> 
         if became_king:
             crowned = True
             if rules.crowning_ends_turn and i != len(jumped) - 1:
-                raise ValueError(
+                raise ValueError(  # noqa: TRY003
                     "Capture sequence cannot continue after crowning when rules.crowning_ends_turn is True."
                 )
             own_men_now &= ~landing_mask
@@ -175,10 +181,10 @@ def validate_move(state: CheckersState, move: MoveKey, rules: CheckersRules) -> 
         curr_sq = landing_sq
 
     if promotes != crowned:
-        raise ValueError("Move promote flag is inconsistent with capture sequence.")
+        raise ValueError("Move promote flag is inconsistent with capture sequence.")  # noqa: TRY003
 
 
-def apply_move(
+def apply_move(  # pylint: disable=too-many-branches
     state: CheckersState,
     move: MoveKey,
     rules: CheckersRules,
@@ -226,7 +232,9 @@ def apply_move(
         next_ply = state.ply_since_capture_or_man_move + 1
 
     next_turn = (
-        valanga.Color.BLACK if state.turn == valanga.Color.WHITE else valanga.Color.WHITE
+        valanga.Color.BLACK
+        if state.turn == valanga.Color.WHITE
+        else valanga.Color.WHITE
     )
 
     if state.turn == valanga.Color.WHITE:

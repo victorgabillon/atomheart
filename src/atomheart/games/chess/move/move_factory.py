@@ -1,4 +1,5 @@
 """Defines a factory for creating chess moves, supporting both standard and Rust-based implementations."""
+# pylint: disable=duplicate-code
 
 from typing import Protocol
 

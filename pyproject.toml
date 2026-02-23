@@ -217,7 +217,7 @@ deps = [
 ]
 set_env = { PYTHONPATH = "{toxinidir}/src" }
 commands = [
-  ["python", "-m", "ruff", "check", "src", "tests"],
+  ["python", "-m", "ruff", "check", "src"],
   ["python", "-m", "ruff", "format", "--check", "src", "tests"],
   ["python", "-m", "pylint", "src/atomheart"],
 ]

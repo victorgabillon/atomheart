@@ -6,14 +6,14 @@ Pattern B is used: move keys are structural and hashable.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 from valanga import BranchKeyGeneratorP
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-MoveKey: TypeAlias = tuple[int, tuple[int, ...], tuple[int, ...], bool]
+type MoveKey = tuple[int, tuple[int, ...], tuple[int, ...], bool]
 """(start_sq, landings, jumped, promotes).
 
 `promotes` is True only when a man is crowned during this move.

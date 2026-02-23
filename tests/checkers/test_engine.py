@@ -5,6 +5,7 @@ import valanga
 
 from atomheart.games.checkers.apply import apply_move
 from atomheart.games.checkers.dynamics import CheckersDynamics
+from atomheart.games.checkers.generation import generate_legal_moves
 from atomheart.games.checkers.geometry import (
     CAPTURE_TABLES,
     NE,
@@ -13,7 +14,6 @@ from atomheart.games.checkers.geometry import (
     SE,
     SW,
 )
-from atomheart.games.checkers.generation import generate_legal_moves
 from atomheart.games.checkers.move import is_capture
 from atomheart.games.checkers.reversible import CheckersReversibleDynamics
 from atomheart.games.checkers.rules import CheckersRules

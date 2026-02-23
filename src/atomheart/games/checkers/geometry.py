@@ -1,4 +1,5 @@
 """Geometry tables for 32-square checkers coordinates."""
+# pylint: disable=redefined-outer-name
 
 from __future__ import annotations
 
@@ -56,7 +57,11 @@ def rc_to_sq32(row: int, col: int) -> int | None:
 
 def _step_from(sq: int, dr: int, dc: int) -> int:
     row, col = sq32_to_rc(sq)
-    return _RC_TO_SQ32[row + dr][col + dc] if 0 <= row + dr < N_ROWS and 0 <= col + dc < N_COLS else -1
+    return (
+        _RC_TO_SQ32[row + dr][col + dc]
+        if 0 <= row + dr < N_ROWS and 0 <= col + dc < N_COLS
+        else -1
+    )
 
 
 def _capture_from(sq: int, dr: int, dc: int) -> CaptureEdge:

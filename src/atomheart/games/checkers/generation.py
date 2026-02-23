@@ -1,6 +1,9 @@
 """Legal move generation for checkers."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import valanga
 
@@ -13,9 +16,11 @@ from .geometry import (
     STEP_TABLES,
     WHITE_FORWARD_DIRECTIONS,
 )
-from .move import MoveKey
-from .rules import CheckersRules
-from .state import CheckersState
+
+if TYPE_CHECKING:
+    from .move import MoveKey
+    from .rules import CheckersRules
+    from .state import CheckersState
 
 
 def generate_legal_moves(state: CheckersState, rules: CheckersRules) -> list[MoveKey]:
@@ -63,7 +68,9 @@ def _generate_quiet_moves(state: CheckersState) -> list[MoveKey]:
     return moves
 
 
-def _generate_capture_moves(state: CheckersState, rules: CheckersRules) -> list[MoveKey]:
+def _generate_capture_moves(
+    state: CheckersState, rules: CheckersRules
+) -> list[MoveKey]:
     own_men, own_kings, opp_men, opp_kings = _side_bitboards(state)
     moves: list[MoveKey] = []
 
@@ -122,7 +129,7 @@ def _captures_for_piece(
 
             jumped_mask = bit(jumped_sq)
             landing_mask = bit(landing_sq)
-            if not ((opp_men_now | opp_kings_now) & jumped_mask):
+            if not (opp_men_now | opp_kings_now) & jumped_mask:
                 continue
             if occ & landing_mask:
                 continue
@@ -142,7 +149,9 @@ def _captures_for_piece(
             else:
                 own_men_next = (own_men_now & ~curr_mask) | landing_mask
 
-            became_king = (not moved_is_king) and ROW_OF_SQ32[landing_sq] == promotion_row
+            became_king = (not moved_is_king) and ROW_OF_SQ32[
+                landing_sq
+            ] == promotion_row
             if became_king and rules.crowning_ends_turn:
                 out.append(
                     (

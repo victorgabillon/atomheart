@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
-from .state import CheckersState
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from .state import CheckersState
 
 MASK32 = (1 << 32) - 1
 

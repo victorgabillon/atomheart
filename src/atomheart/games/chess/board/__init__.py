@@ -1,7 +1,5 @@
 """Chess board implementations and utilities."""
 
-from importlib.util import find_spec
-
 from .board_chi import BoardChi
 from .board_modification import BoardModification, BoardModificationP
 from .factory import (
@@ -12,6 +10,7 @@ from .factory import (
     create_board_factory,
 )
 from .iboard import BoardKey, IBoard
+from .rusty_board import RustyBoardChi
 from .utils import Fen
 
 __all__ = [
@@ -22,13 +21,9 @@ __all__ = [
     "BoardModificationP",
     "Fen",
     "IBoard",
+    "RustyBoardChi",
     "create_board",
     "create_board_chi",
     "create_board_chi_from_pychess_board",
     "create_board_factory",
 ]
-
-if find_spec("shakmaty_python_binding") is not None:
-    from .rusty_board import RustyBoardChi
-
-    __all__.append("RustyBoardChi")

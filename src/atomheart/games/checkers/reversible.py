@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUndo]):
     """In-place reversible dynamics for checkers search."""
 
-    dynamics: "CheckersDynamics"
+    dynamics: CheckersDynamics
     _wm: int
     _wk: int
     _bm: int
@@ -41,7 +41,8 @@ class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUnd
     _turn: valanga.Color
     _ply: int
 
-    def __init__(self, dynamics: "CheckersDynamics", state: CheckersState) -> None:
+    def __init__(self, dynamics: CheckersDynamics, state: CheckersState) -> None:
+        """Initialize reversible dynamics with a dynamics engine and initial state."""
         self.dynamics = dynamics
         self._wm = state.wm
         self._wk = state.wk
@@ -50,7 +51,7 @@ class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUnd
         self._turn = state.turn
         self._ply = state.ply_since_capture_or_man_move
 
-    @property
+    @property  # type: ignore[override]
     def state(self) -> CheckersState:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Build immutable state snapshot from current mutable bitboards."""
         return CheckersState(
@@ -75,9 +76,9 @@ class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUnd
         """Return legal actions from current state."""
         return self.dynamics.legal_actions(self.state)
 
-    def push(self, action: valanga.BranchKey) -> CheckersUndo:
+    def push(self, action: valanga.BranchKey) -> CheckersUndo:  # pylint: disable=too-many-branches
         """Apply action in-place and return undo information."""
-        move = self.dynamics._as_move_key(action)
+        move = self.dynamics._as_move_key(action)  # pyright: ignore[reportPrivateUsage]  # pylint: disable=protected-access
         validate_move(state=self.state, move=move, rules=self.dynamics.rules)
         start_sq, landings, jumped, promotes = move
         to_sq = landings[-1]
@@ -97,7 +98,7 @@ class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUnd
         elif own_men & start_mask:
             own_men &= ~start_mask
         else:
-            raise ValueError(f"No piece on start square {start_sq}.")
+            raise ValueError(f"No piece on start square {start_sq}.")  # noqa: TRY003
 
         captured: list[tuple[int, bool]] = []
         for jumped_sq in jumped:
@@ -109,7 +110,7 @@ class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUnd
                 opp_men &= ~jumped_mask
                 captured.append((jumped_sq, False))
             else:
-                raise ValueError(f"No opponent piece to capture on square {jumped_sq}.")
+                raise ValueError(f"No opponent piece to capture on square {jumped_sq}.")  # noqa: TRY003
 
         if moved_was_king or promotes:
             own_kings |= to_mask
@@ -188,4 +189,3 @@ class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUnd
     def action_from_name(self, name: str) -> MoveKey:
         """Parse/resolve a move name from current state."""
         return self.dynamics.action_from_name(self.state, name)
-
