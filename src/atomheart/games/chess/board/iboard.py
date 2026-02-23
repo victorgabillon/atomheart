@@ -9,10 +9,10 @@ import chess
 import valanga
 import yaml
 
-from atomheart.board.board_modification import BoardModificationP
-from atomheart.move import MoveUci
-from atomheart.move.imove import MoveKey
+from atomheart.games.chess.move.imove import MoveKey
+from atomheart.games.chess.move.utils import MoveUci
 
+from .board_modification import BoardModificationP
 from .utils import Fen, FenPlusHistory, FenPlusMoveHistory
 
 # identifier that should be unique to any position

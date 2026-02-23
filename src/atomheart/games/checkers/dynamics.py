@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import cast
 
 import valanga
 from valanga.over_event import HowOver, Winner
@@ -16,9 +17,11 @@ from .state import CheckersState
 class CheckersDynamics(valanga.Dynamics[CheckersState]):
     """Protocol-correct scaffold dynamics for checkers."""
 
-    rules: CheckersRules = CheckersRules()
+    rules: CheckersRules = field(default_factory=CheckersRules)
 
-    def legal_actions(self, state: CheckersState) -> valanga.BranchKeyGeneratorP[MoveKey]:
+    def legal_actions(
+        self, state: CheckersState
+    ) -> valanga.BranchKeyGeneratorP[MoveKey]:
         """Return legal move keys for the state.
 
         This scaffold intentionally returns an empty move list until move generation
@@ -27,7 +30,9 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
         _ = (state, self.rules)
         return CheckersMoveGenerator([], sort_branch_keys=True)
 
-    def step(self, state: CheckersState, action: MoveKey) -> valanga.Transition[CheckersState]:
+    def step(
+        self, state: CheckersState, action: valanga.BranchKey
+    ) -> valanga.Transition[CheckersState]:
         """Apply an action and return a transition.
 
         The current scaffold leaves board mutation unimplemented and returns the
@@ -41,11 +46,9 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
         over_event: valanga.OverEvent | None = None
         if is_over:
             winner = (
-                Winner.BLACK
-                if (next_state.wm | next_state.wk) == 0
-                else Winner.WHITE
+                Winner.BLACK if (next_state.wm | next_state.wk) == 0 else Winner.WHITE
             )
-            over_event = valanga.OverEvent(HowOver.WIN, winner, "piece_exhaustion")
+            over_event = valanga.OverEvent(HowOver.WIN, winner, None)
 
         return valanga.Transition(
             next_state=next_state,
@@ -55,7 +58,7 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
             info={"move": move_name(move)},
         )
 
-    def action_name(self, state: CheckersState, action: MoveKey) -> str:
+    def action_name(self, state: CheckersState, action: valanga.BranchKey) -> str:
         """Return a stable text form for an action."""
         _ = state
         return move_name(self._as_move_key(action))
@@ -70,34 +73,40 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
         raise ValueError(msg)
 
     @staticmethod
-    def _as_move_key(action: MoveKey) -> MoveKey:
+    def _as_move_key(action: valanga.BranchKey) -> MoveKey:
         """Type-check and normalize branch key to a checkers move key."""
-        if not isinstance(action, tuple) or len(action) != 4:
-            raise TypeError("Checkers actions must be MoveKey tuples.")
+        if not isinstance(action, tuple) or len(action) != 4:  # pyright: ignore[reportUnknownArgumentType]
+            raise TypeError("Checkers actions must be MoveKey tuples.")  # noqa: TRY003
 
-        start_sq, landings, jumped, promotes = action
-        if not isinstance(start_sq, int):
-            raise TypeError("MoveKey start square must be int.")
-        if not isinstance(landings, tuple) or not landings:
-            raise TypeError("MoveKey landings must be a non-empty tuple.")
-        if not all(isinstance(landing_sq, int) for landing_sq in landings):
-            raise TypeError("MoveKey landings must contain ints.")
-        if not isinstance(jumped, tuple):
-            raise TypeError("MoveKey jumped must be a tuple.")
-        if not all(isinstance(jumped_sq, int) for jumped_sq in jumped):
-            raise TypeError("MoveKey jumped must contain ints.")
+        # Cast to MoveKey after basic tuple structure validation
+        move_key = cast("MoveKey", action)
+        start_sq, landings, jumped, promotes = move_key
+
+        # Runtime validation of element types
+        if not isinstance(start_sq, int):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError("MoveKey start square must be int.")  # noqa: TRY003
+        if not isinstance(landings, tuple) or not landings:  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError("MoveKey landings must be a non-empty tuple.")  # noqa: TRY003
+        if not all(isinstance(landing_sq, int) for landing_sq in landings):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError("MoveKey landings must contain ints.")  # noqa: TRY003
+        if not isinstance(jumped, tuple):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError("MoveKey jumped must be a tuple.")  # noqa: TRY003
+        if not all(isinstance(jumped_sq, int) for jumped_sq in jumped):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError("MoveKey jumped must contain ints.")  # noqa: TRY003
         if jumped and len(jumped) != len(landings):
-            raise TypeError("Capture MoveKey must satisfy len(jumped) == len(landings).")
+            raise TypeError(  # noqa: TRY003
+                "Capture MoveKey must satisfy len(jumped) == len(landings)."
+            )
         if not jumped and len(landings) != 1:
-            raise TypeError("Quiet MoveKey must contain exactly one landing square.")
+            raise TypeError("Quiet MoveKey must contain exactly one landing square.")  # noqa: TRY003
         if len(set(jumped)) != len(jumped):
-            raise TypeError("Capture MoveKey cannot repeat jumped squares.")
+            raise TypeError("Capture MoveKey cannot repeat jumped squares.")  # noqa: TRY003
         if start_sq in landings:
-            raise TypeError("MoveKey start square cannot appear in landings.")
-        if not isinstance(promotes, bool):
-            raise TypeError("MoveKey promote flag must be bool.")
+            raise TypeError("MoveKey start square cannot appear in landings.")  # noqa: TRY003
+        if not isinstance(promotes, bool):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError("MoveKey promote flag must be bool.")  # noqa: TRY003
 
-        return action
+        return move_key
 
     def _apply_move(self, state: CheckersState, move: MoveKey) -> CheckersState:
         """Apply a move and return the next state.

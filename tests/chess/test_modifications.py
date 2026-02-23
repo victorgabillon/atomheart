@@ -5,22 +5,22 @@ from typing import TYPE_CHECKING
 import chess
 import pytest
 
-from atomheart.board import (
+from atomheart.games.chess.board import (
     BoardModificationP,
     Fen,
     IBoard,
     create_board,
     create_board_chi,
 )
-from atomheart.board.board_modification import (
+from atomheart.games.chess.board.board_modification import (
     PieceInSquare,
     compute_modifications,
 )
-from atomheart.board.utils import FenPlusHistory
-from atomheart.move import MoveUci
+from atomheart.games.chess.board.utils import FenPlusHistory
+from atomheart.games.chess.move import MoveUci
 
 if TYPE_CHECKING:
-    from atomheart import BoardChi
+    from atomheart.games.chess.board import BoardChi
 
 examples: list[tuple[Fen, MoveUci, list[PieceInSquare], list[PieceInSquare]]] = [
     (

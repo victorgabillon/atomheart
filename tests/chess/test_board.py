@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 import chess
 import pytest
 
-from atomheart.board import Fen, IBoard, create_board
-from atomheart.board.utils import FenPlusHistory
+from atomheart.games.chess.board import Fen, IBoard, create_board
+from atomheart.games.chess.board.utils import FenPlusHistory
 
 if TYPE_CHECKING:
-    from atomheart.move import MoveUci
+    from atomheart.games.chess.move import MoveUci
 
 
 @pytest.mark.parametrize(("use_rusty_board"), (True, False))

@@ -1,41 +1,17 @@
-"""Valanga adapters based on :class:`IBoard`."""
+"""Chess dynamics/rules for Valanga."""
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 import valanga
 from valanga.over_event import HowOver, Winner
 
+from .state import ChessState
+
 if TYPE_CHECKING:
     import chess
 
-    from atomheart.board.iboard import IBoard
-    from atomheart.move.imove import MoveKey
-
-
-@dataclass(frozen=True, slots=True)
-class ChessState(valanga.TurnState):
-    """Pure observation wrapper around an :class:`IBoard`."""
-
-    board: "IBoard"
-
-    @property
-    def tag(self) -> valanga.StateTag:
-        """Return the board tag."""
-        return self.board.tag
-
-    def is_game_over(self) -> bool:
-        """Return whether the game is over."""
-        return self.board.is_game_over()
-
-    def pprint(self) -> str:
-        """Return a pretty-printed board string."""
-        return self.board.print_chess_board()
-
-    @property
-    def turn(self) -> valanga.Color:
-        """Return the current turn color."""
-        return self.board.turn
+    from atomheart.games.chess.board.iboard import IBoard
+    from atomheart.games.chess.move.imove import MoveKey
 
 
 class ChessDynamics(valanga.Dynamics[ChessState]):

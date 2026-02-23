@@ -15,7 +15,7 @@ class CheckersState(valanga.TurnState):
     wk: int
     bm: int
     bk: int
-    turn: valanga.Color
+    turn: valanga.Color  # pyright: ignore[reportIncompatibleMethodOverride]
     ply_since_capture_or_man_move: int = 0
 
     @property

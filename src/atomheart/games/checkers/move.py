@@ -6,9 +6,12 @@ Pattern B is used: move keys are structural and hashable.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 from valanga import BranchKeyGeneratorP
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 MoveKey = tuple[int, tuple[int, ...], tuple[int, ...], bool]
 
@@ -32,7 +35,7 @@ class CheckersMoveGenerator(BranchKeyGeneratorP[MoveKey]):
         """Return all generated keys (already fully materialized)."""
         return tuple(self.moves)
 
-    def __iter__(self) -> "CheckersMoveGenerator":
+    def __iter__(self) -> CheckersMoveGenerator:
         """Return self as an iterator."""
         return self
 
@@ -53,7 +56,7 @@ class CheckersMoveGenerator(BranchKeyGeneratorP[MoveKey]):
         """Return all move keys."""
         return tuple(self.moves)
 
-    def copy_with_reset(self) -> "CheckersMoveGenerator":
+    def copy_with_reset(self) -> CheckersMoveGenerator:
         """Create a new generator with the same moves and reset iteration."""
         return CheckersMoveGenerator(
             self.moves.copy(),

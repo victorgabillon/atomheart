@@ -5,7 +5,7 @@ from enum import StrEnum
 from importlib.resources import as_file, files
 from typing import Literal, Protocol
 
-from atomheart.board.board_tools import convert_to_fen
+from .board_tools import convert_to_fen
 
 
 class StartingPositionArgsType(StrEnum):

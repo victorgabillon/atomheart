@@ -12,13 +12,13 @@ import chess
 import shakmaty_python_binding
 from valanga import Color
 
-from atomheart.board.board_modification import (
+from atomheart.games.chess.move.imove import MoveKey
+from atomheart.games.chess.move.utils import MoveUci
+
+from .board_modification import (
     BoardModificationP,
     BoardModificationRust,
 )
-from atomheart.move.imove import MoveKey
-from atomheart.move.utils import MoveUci
-
 from .iboard import (
     BoardKey,
     BoardKeyWithoutCounters,

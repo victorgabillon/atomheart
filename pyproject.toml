@@ -5,19 +5,29 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "atomheart"
 version = "0.1.9"
-description = "chess environment"
+description = "Board game environments and Valanga adapters (chess, checkers)"
 requires-python = ">=3.13"
 dependencies = [
     "rich",
     "valanga >=0.2.0",
-    "chess",
-    "shakmaty_python_binding>=0.1.5",
     "PyYAML",
-
-
 ]
 
 [project.optional-dependencies]
+chess = [
+    "chess",
+]
+
+chess-rust = [
+    "chess",
+    "shakmaty_python_binding>=0.1.5",
+]
+
+all = [
+    "chess",
+    "shakmaty_python_binding>=0.1.5",
+]
+
 test = [
     # Testing dependencies
     "pytest>=9.0.2",
@@ -187,7 +197,7 @@ commands = [["python", "-m", "build"]]
 base_python = ["python3.13"]
 
 [tool.tox.env.py313]
-extras = ["test"]
+extras = ["test", "all"]
 commands = [["pytest", "{posargs}"]]
 
 [tool.tox.env.lint]

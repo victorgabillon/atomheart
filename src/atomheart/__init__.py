@@ -1,7 +1,13 @@
-"""Top-level package exports for atomheart games."""
+"""atomheart: multiple board-game environments and Valanga adapters.
+
+The clean public API is through game-specific modules:
+- atomheart.games.checkers
+- atomheart.games.chess
+"""
 
 from importlib.util import find_spec
 
+from . import games
 from .games.checkers import (
     CheckersDynamics,
     CheckersReversibleDynamics,
@@ -14,11 +20,11 @@ __all__ = [
     "CheckersReversibleDynamics",
     "CheckersRules",
     "CheckersState",
+    "games",
 ]
 
 if find_spec("chess") is not None:
-    from .board.board_chi import BoardChi
-    from .board.valanga_adapter import ChessDynamics, ChessState
+    from .games.chess import BoardChi, ChessDynamics, ChessState  # noqa: F401
 
     __all__.extend(
         [
@@ -28,8 +34,11 @@ if find_spec("chess") is not None:
         ]
     )
 
-if find_spec("chess") is not None and find_spec("shakmaty_python_binding") is not None:
-    from .board.factory import create_board_chi, create_board_chi_from_pychess_board
+if find_spec("chess") is not None:
+    from .games.chess import (  # noqa: F401
+        create_board_chi,
+        create_board_chi_from_pychess_board,
+    )
 
     __all__.extend(
         [

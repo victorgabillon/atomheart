@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 import chess
 
-from atomheart.move import MoveUci
+from atomheart.games.chess.move.utils import MoveUci
 
 Fen = typing.Annotated[str, "a string representing a fen"]
 

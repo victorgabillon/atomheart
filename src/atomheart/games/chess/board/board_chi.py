@@ -8,16 +8,16 @@ import chess
 from chess import Outcome, _BoardState  # pyright: ignore[reportPrivateUsage]
 from valanga import Color
 
-from atomheart.board.board_modification import (
+from atomheart.games.chess.move.imove import MoveKey
+from atomheart.games.chess.move.utils import MoveUci
+from atomheart.utils.logger import chipiron_logger
+
+from .board_modification import (
     BoardModification,
     BoardModificationP,
     PieceInSquare,
     compute_modifications,
 )
-from atomheart.move import MoveUci
-from atomheart.move.imove import MoveKey
-from atomheart.utils.logger import chipiron_logger
-
 from .iboard import BoardKey, IBoard, LegalMoveKeyGeneratorP, compute_key
 from .utils import Fen, FenPlusHistory
 

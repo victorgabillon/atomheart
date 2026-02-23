@@ -5,11 +5,11 @@ from typing import Protocol
 import chess
 import shakmaty_python_binding
 
-from atomheart.board.iboard import IBoard
-from atomheart.move.imove import IMove
+from atomheart.games.chess.board.iboard import IBoard
+from atomheart.games.chess.board.rusty_board import RustyBoardChi
 
-from .board import RustyBoardChi
-from .move import MoveUci
+from .imove import IMove
+from .utils import MoveUci
 
 
 class MoveFactory(Protocol):
