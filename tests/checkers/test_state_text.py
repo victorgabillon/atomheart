@@ -15,7 +15,6 @@ def test_standard_allows_turn_override() -> None:
     assert state.bm == 0xFFF00000
 
 
-
 def test_to_text_from_text_roundtrip_initial() -> None:
     """Initial position should round-trip exactly through text."""
     state = CheckersState.standard()

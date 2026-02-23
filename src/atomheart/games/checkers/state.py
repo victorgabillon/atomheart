@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import valanga
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _TEXT_RE = re.compile(
     r"^\s*([WB])\s*;\s*ply\s*=\s*(\d+)\s*;\s*W\s*=\s*([^;]*)\s*;\s*B\s*=\s*([^;]*)\s*$",
@@ -44,21 +46,21 @@ def _parse_piece_list(text: str) -> tuple[int, int]:
     for token in piece_text.split(","):
         item = token.strip()
         if not item:
-            raise ValueError("Empty token in piece list (double comma).")
+            raise ValueError("Empty token in piece list (double comma).")  # noqa: TRY003
 
         is_king = item.upper().startswith("K")
         square_text = item[1:] if is_king else item
         if not square_text.isdigit():
-            raise ValueError(f"Invalid square token: {token!r}")
+            raise ValueError(f"Invalid square token: {token!r}")  # noqa: TRY003
 
         square = int(square_text)
         if square < 1 or square > 32:
-            raise ValueError(f"Square out of range 1..32: {square}")
+            raise ValueError(f"Square out of range 1..32: {square}")  # noqa: TRY003
 
         index = square - 1
         square_mask = 1 << index
         if (men | kings) & square_mask:
-            raise ValueError(f"Duplicate square token: {token!r}")
+            raise ValueError(f"Duplicate square token: {token!r}")  # noqa: TRY003
 
         if is_king:
             kings |= square_mask
@@ -138,7 +140,7 @@ class CheckersState(valanga.TurnState):
         """Parse a state from ``to_text`` representation."""
         match = _TEXT_RE.match(text)
         if match is None:
-            raise ValueError(f"Invalid checkers position text: {text!r}")
+            raise ValueError(f"Invalid checkers position text: {text!r}")  # noqa: TRY003
 
         turn_token, ply_text, white_text, black_text = match.groups()
         turn = valanga.Color.WHITE if turn_token.upper() == "W" else valanga.Color.BLACK
@@ -148,14 +150,14 @@ class CheckersState(valanga.TurnState):
         black_men, black_kings = _parse_piece_list(black_text)
 
         if white_men & white_kings:
-            raise ValueError("White square listed as both man and king.")
+            raise ValueError("White square listed as both man and king.")  # noqa: TRY003
         if black_men & black_kings:
-            raise ValueError("Black square listed as both man and king.")
+            raise ValueError("Black square listed as both man and king.")  # noqa: TRY003
 
         white_all = white_men | white_kings
         black_all = black_men | black_kings
         if white_all & black_all:
-            raise ValueError("Square occupied by both white and black.")
+            raise ValueError("Square occupied by both white and black.")  # noqa: TRY003
 
         return cls(
             wm=white_men,
@@ -173,7 +175,7 @@ class CheckersState(valanga.TurnState):
     def piece_at(self, sq32: int) -> int:
         """Return piece code at sq32 (1..32): 0, 1, 2, -1, -2."""
         if sq32 < 1 or sq32 > 32:
-            raise ValueError("sq32 out of range 1..32")
+            raise ValueError("sq32 out of range 1..32")  # noqa: TRY003
 
         bit = 1 << (sq32 - 1)
         if self.wm & bit:
@@ -189,4 +191,3 @@ class CheckersState(valanga.TurnState):
     def pieces_by_square(self) -> list[int]:
         """Return board as a length-32 list using ``piece_at`` encoding."""
         return [self.piece_at(square) for square in range(1, 33)]
-
