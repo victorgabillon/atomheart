@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "atomheart"
-version = "0.1.9"
+version = "0.2.2"
 description = "Board game environments and Valanga adapters (chess, checkers)"
 requires-python = ">=3.13"
 dependencies = [
@@ -36,7 +36,7 @@ test = [
 ]
 
 lint = [
-  "ruff>=0.15.0",
+  "ruff>=0.15.1",
   "pylint>=4.0.4",
 ]
 
@@ -52,7 +52,7 @@ dev = [
     "types-PyYAML>=6.0.12.12",
 
     # Linting & formatting
-    "ruff>=0.15.0",
+    "ruff>=0.15.1",
     "pylint>=4.0.4",
     "black>=25.1.0",
 
@@ -212,7 +212,7 @@ deps = [
   "PyYAML",
 
   # tool deps
-  "ruff>=0.15.0",
+  "ruff>=0.15.1",
   "pylint>=4.0.4",
 ]
 set_env = { PYTHONPATH = "{toxinidir}/src" }
