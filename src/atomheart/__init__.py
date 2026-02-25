@@ -3,6 +3,7 @@
 The clean public API is through game-specific modules:
 - atomheart.games.checkers
 - atomheart.games.chess
+- atomheart.games.morpion
 """
 
 from importlib.util import find_spec
@@ -14,12 +15,16 @@ from .games.checkers import (
     CheckersRules,
     CheckersState,
 )
+from .games.morpion import MorpionDynamics, MorpionState, Variant
 
 __all__ = [
     "CheckersDynamics",
     "CheckersReversibleDynamics",
     "CheckersRules",
     "CheckersState",
+    "MorpionDynamics",
+    "MorpionState",
+    "Variant",
     "games",
 ]
 

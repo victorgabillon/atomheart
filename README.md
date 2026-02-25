@@ -9,6 +9,7 @@ A Python chess library providing a unified interface for chess board operations 
 - Board modification tracking
 - Support for both Python-chess and Rust-based backends
 - FEN notation support
+- Morpion Solitaire environment (5T and 5D variants)
 
 ## About
 
