@@ -5,7 +5,9 @@ import pytest
 from atomheart.games.morpion import MorpionDynamics, MorpionState, Variant
 
 
-def _segment(a: tuple[int, int], b: tuple[int, int]) -> tuple[tuple[int, int], tuple[int, int]]:
+def _segment(
+    a: tuple[int, int], b: tuple[int, int]
+) -> tuple[tuple[int, int], tuple[int, int]]:
     """Return normalized segment endpoints."""
     return (a, b) if a <= b else (b, a)
 
@@ -13,9 +15,7 @@ def _segment(a: tuple[int, int], b: tuple[int, int]) -> tuple[tuple[int, int], t
 def _state_with_one_horizontal_line(variant: Variant) -> MorpionState:
     """Build a state where one horizontal line from x=0..4 has already been drawn."""
     points = frozenset((x, 0) for x in range(8))
-    used_unit_segments = frozenset(
-        _segment((x, 0), (x + 1, 0)) for x in range(4)
-    )
+    used_unit_segments = frozenset(_segment((x, 0), (x + 1, 0)) for x in range(4))
     dir_usage = {
         ((0, 0), 0): 1,
         ((1, 0), 0): 2,

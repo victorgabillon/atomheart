@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Iterator, Sequence, cast
+from typing import TYPE_CHECKING, cast
 
 import valanga
 
-from .state import Dir, MorpionState, Point, Segment, Variant, _norm_seg
+from .state import Dir, MorpionState, Point, Segment, Variant, norm_seg
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Sequence
 
 DIRECTIONS: tuple[Dir, ...] = (
     (1, 0),
@@ -17,6 +20,53 @@ DIRECTIONS: tuple[Dir, ...] = (
 )
 
 Action = tuple[int, int, int, int]
+
+
+class MorpionIllegalActionError(ValueError):
+    """Raised when an action violates Morpion rules."""
+
+    @classmethod
+    def missing_point_already_present(cls) -> MorpionIllegalActionError:
+        """Create error for adding an already occupied missing point."""
+        return cls("Illegal action: missing point already present.")
+
+    @classmethod
+    def line_missing_more_than_one_point(cls) -> MorpionIllegalActionError:
+        """Create error for a line missing more than one required point."""
+        return cls("Illegal action: line missing more than one point.")
+
+    @classmethod
+    def overlaps_existing_segment(cls) -> MorpionIllegalActionError:
+        """Create error for segment overlap with an existing line."""
+        return cls("Illegal action: overlaps existing segment.")
+
+    @classmethod
+    def violates_same_direction_rule(cls) -> MorpionIllegalActionError:
+        """Create error for same-direction incompatibility under variant rules."""
+        return cls("Illegal action: violates 5T/5D same-direction rule.")
+
+    @classmethod
+    def action_out_of_range(cls) -> MorpionIllegalActionError:
+        """Create error for action index values outside valid bounds."""
+        return cls("Morpion action out of range.")
+
+
+class MorpionActionNameError(ValueError):
+    """Raised when parsing a textual action representation fails."""
+
+    def __init__(self, name: str) -> None:
+        """Build parse error with original action name."""
+        super().__init__(f"Bad action name: {name!r}")
+
+
+class MorpionActionTypeError(TypeError):
+    """Raised when action key is not a valid Morpion action tuple."""
+
+    def __init__(self) -> None:
+        """Build tuple-shape validation error."""
+        super().__init__(
+            "Morpion actions must be 4-tuples: (dir_index, x0, y0, missing_i)."
+        )
 
 
 class _ListBranchKeyGen(valanga.BranchKeyGeneratorP[valanga.BranchKey]):
@@ -32,9 +82,7 @@ class _ListBranchKeyGen(valanga.BranchKeyGeneratorP[valanga.BranchKey]):
     ) -> None:
         """Store keys for deterministic iteration."""
         self.sort_branch_keys = sort_branch_keys
-        self._keys = list(keys)
-        if self.sort_branch_keys:
-            self._keys.sort()
+        self._keys = sorted(keys, key=repr) if self.sort_branch_keys else list(keys)
         self._i = 0
 
     @property
@@ -62,12 +110,14 @@ class _ListBranchKeyGen(valanga.BranchKeyGeneratorP[valanga.BranchKey]):
         """Return all branch keys as a new list."""
         return list(self._keys)
 
-    def copy_with_reset(self) -> "_ListBranchKeyGen":
+    def copy_with_reset(self) -> _ListBranchKeyGen:
         """Return a fresh generator reset at position zero."""
         return _ListBranchKeyGen(self._keys, sort_branch_keys=self.sort_branch_keys)
 
 
-def _line_points(x0: int, y0: int, direction: Dir) -> tuple[Point, Point, Point, Point, Point]:
+def _line_points(
+    x0: int, y0: int, direction: Dir
+) -> tuple[Point, Point, Point, Point, Point]:
     """Return the five points on the candidate line."""
     dx, dy = direction
     return (
@@ -84,10 +134,10 @@ def _unit_segments_on_line(
 ) -> tuple[Segment, Segment, Segment, Segment]:
     """Return the four unit segments composing a five-point line."""
     return (
-        _norm_seg(pts5[0], pts5[1]),
-        _norm_seg(pts5[1], pts5[2]),
-        _norm_seg(pts5[2], pts5[3]),
-        _norm_seg(pts5[3], pts5[4]),
+        norm_seg(pts5[0], pts5[1]),
+        norm_seg(pts5[1], pts5[2]),
+        norm_seg(pts5[2], pts5[3]),
+        norm_seg(pts5[3], pts5[4]),
     )
 
 
@@ -131,6 +181,17 @@ def _apply_dir_usage(
     return new_usage
 
 
+def _missing_index_for_candidate(
+    points: frozenset[Point],
+    pts5: tuple[Point, Point, Point, Point, Point],
+) -> int | None:
+    """Return missing index when exactly one point is absent, else ``None``."""
+    missing = [index for index, point in enumerate(pts5) if point not in points]
+    if len(missing) != 1:
+        return None
+    return missing[0]
+
+
 @dataclass(slots=True)
 class MorpionDynamics(valanga.Dynamics[MorpionState]):
     """Rule engine for Morpion transitions."""
@@ -154,20 +215,20 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
 
         new_point = pts5[missing_i]
         if new_point in state.points:
-            raise ValueError("Illegal action: missing point already present.")
+            raise MorpionIllegalActionError.missing_point_already_present()
 
         for index, point in enumerate(pts5):
             if index == missing_i:
                 continue
             if point not in state.points:
-                raise ValueError("Illegal action: line missing more than one point.")
+                raise MorpionIllegalActionError.line_missing_more_than_one_point()
 
         segs = _unit_segments_on_line(pts5)
         if any(seg in state.used_unit_segments for seg in segs):
-            raise ValueError("Illegal action: overlaps existing segment.")
+            raise MorpionIllegalActionError.overlaps_existing_segment()
 
         if not _is_parallel_compat(state, dir_index, pts5):
-            raise ValueError("Illegal action: violates 5T/5D same-direction rule.")
+            raise MorpionIllegalActionError.violates_same_direction_rule()
 
         new_points = set(state.points)
         new_points.add(new_point)
@@ -204,7 +265,7 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
         _ = state
         parts = [part.strip() for part in name.split(";")]
         if len(parts) != 3:
-            raise ValueError(f"Bad action name: {name!r}")
+            raise MorpionActionNameError(name)
 
         d_part = parts[0].removeprefix("d=").strip()
         start_part = parts[1].removeprefix("start=").strip()
@@ -223,15 +284,16 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
     @staticmethod
     def _as_action(action: valanga.BranchKey) -> Action:
         """Validate and cast a generic branch key to Morpion ``Action``."""
-        if not isinstance(action, tuple) or len(action) != 4:
-            raise TypeError(
-                "Morpion actions must be 4-tuples: (dir_index, x0, y0, missing_i)."
-            )
+        if not isinstance(action, tuple):
+            raise MorpionActionTypeError
+        action_tuple = cast("tuple[object, ...]", action)
+        if len(action_tuple) != 4:
+            raise MorpionActionTypeError
 
-        normalized = cast(Action, action)
+        normalized = cast("Action", action_tuple)
         dir_index, _, _, missing_i = normalized
         if dir_index not in range(4) or missing_i not in range(5):
-            raise ValueError("Morpion action out of range.")
+            raise MorpionIllegalActionError.action_out_of_range()
         return normalized
 
     def _enumerate_actions(
@@ -255,13 +317,8 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
                 for y0 in range(miny, maxy + 1):
                     pts5 = _line_points(x0, y0, direction)
 
-                    missing: list[int] = []
-                    for index, point in enumerate(pts5):
-                        if point not in state.points:
-                            missing.append(index)
-                            if len(missing) > 1:
-                                break
-                    if len(missing) != 1:
+                    missing_i = _missing_index_for_candidate(state.points, pts5)
+                    if missing_i is None:
                         continue
 
                     segs = _unit_segments_on_line(pts5)
@@ -271,6 +328,6 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
                     if not _is_parallel_compat(state, dir_index, pts5):
                         continue
 
-                    yield (dir_index, x0, y0, missing[0])
+                    yield (dir_index, x0, y0, missing_i)
                     if stop_after_one:
                         return

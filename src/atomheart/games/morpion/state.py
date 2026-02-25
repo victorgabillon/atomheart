@@ -3,29 +3,32 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Mapping
+from enum import StrEnum
+from typing import TYPE_CHECKING
 
 import valanga
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 Point = tuple[int, int]
 Dir = tuple[int, int]
 Segment = tuple[Point, Point]
 
 
-class Variant(str, Enum):
+class Variant(StrEnum):
     """Morpion Solitaire ruleset variant."""
 
     TOUCHING_5T = "5T"
     DISJOINT_5D = "5D"
 
 
-def _norm_seg(a: Point, b: Point) -> Segment:
+def norm_seg(a: Point, b: Point) -> Segment:
     """Return a normalized unit segment with deterministic endpoint ordering."""
     return (a, b) if a <= b else (b, a)
 
 
-def standard_initial_points_A4() -> frozenset[Point]:
+def standard_initial_points_a4() -> frozenset[Point]:
     """Return the standard 36-point ``A4`` cross start position."""
     pts: set[Point] = set()
     for y in (-1, 0):
@@ -79,9 +82,7 @@ class MorpionState(valanga.State):
 
         lines: list[str] = []
         for y in range(maxy, miny - 1, -1):
-            row = []
-            for x in range(minx, maxx + 1):
-                row.append("X" if (x, y) in self.points else ".")
+            row = ["X" if (x, y) in self.points else "." for x in range(minx, maxx + 1)]
             lines.append("".join(row))
         return "\n".join(lines)
 
@@ -89,7 +90,7 @@ class MorpionState(valanga.State):
 def initial_state(variant: Variant = Variant.TOUCHING_5T) -> MorpionState:
     """Build the default Morpion initial state."""
     return MorpionState(
-        points=standard_initial_points_A4(),
+        points=standard_initial_points_a4(),
         used_unit_segments=frozenset(),
         dir_usage={},
         moves=0,

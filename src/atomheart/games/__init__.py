@@ -6,8 +6,7 @@ Available games:
 - morpion: Morpion Solitaire (5T/5D variants)
 """
 
-from . import checkers
-from . import morpion
+from . import checkers, morpion
 
 __all__ = ["checkers", "morpion"]
 
