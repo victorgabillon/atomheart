@@ -1,10 +1,7 @@
 """Chess game implementation for atomheart.
 
-This module provides a complete chess implementation with:
-- State representation (ChessState)
-- Game dynamics/rules (ChessDynamics)
-- Board implementations (python-chess and rust-based)
-- Move representations and utilities
+Core chess state/dynamics are exposed here. Board helpers are available when
+the optional ``chess`` extra is installed.
 """
 
 from .dynamics import ChessDynamics
@@ -15,14 +12,15 @@ __all__ = [
     "ChessState",
 ]
 
-# Conditional exports for board and move when dependencies are available
 try:
     from .board import (  # noqa: F401
         BoardChi,
         create_board_chi,
         create_board_chi_from_pychess_board,
     )
-
+except ImportError:
+    pass
+else:
     __all__.extend(
         [
             "BoardChi",
@@ -30,5 +28,3 @@ try:
             "create_board_chi_from_pychess_board",
         ]
     )
-except ImportError:
-    pass

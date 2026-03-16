@@ -1,16 +1,20 @@
 """Defines a factory for creating chess moves, supporting both standard and Rust-based implementations."""
 # pylint: disable=duplicate-code
 
-from typing import Protocol
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol
 
 import chess
-import shakmaty_python_binding
 
-from atomheart.games.chess.board.iboard import IBoard
-from atomheart.games.chess.board.rusty_board import RustyBoardChi
+if TYPE_CHECKING:
+    import shakmaty_python_binding
 
-from .imove import IMove
-from .utils import MoveUci
+    from atomheart.games.chess.board.iboard import IBoard
+    from atomheart.games.chess.board.rusty_board import RustyBoardChi
+
+    from .imove import IMove
+    from .utils import MoveUci
 
 
 class MoveFactory(Protocol):
@@ -41,7 +45,8 @@ def create_move_factory(
 
 
 def create_rust_move(
-    move_uci: MoveUci, board: RustyBoardChi | None = None
+    move_uci: MoveUci,
+    board: RustyBoardChi | None = None,
 ) -> shakmaty_python_binding.MyMove:
     """Create a Rust-based move.
 
@@ -53,7 +58,14 @@ def create_rust_move(
         shakmaty_python_binding.MyMove: The created Rust-based move.
 
     """
+    import shakmaty_python_binding  # pylint: disable=import-outside-toplevel
+
+    from atomheart.games.chess.board.rusty_board import (  # pylint: disable=import-outside-toplevel
+        RustyBoardChi,
+    )
+
     assert board is not None
+    assert isinstance(board, RustyBoardChi)
     return shakmaty_python_binding.MyMove(move_uci, board.chess_)
 
 
@@ -70,6 +82,12 @@ def create_rust_move_test_2(
         shakmaty_python_binding.MyMove: The created Rust-based move.
 
     """
+    import shakmaty_python_binding  # pylint: disable=import-outside-toplevel
+
+    from atomheart.games.chess.board.rusty_board import (  # pylint: disable=import-outside-toplevel
+        RustyBoardChi,
+    )
+
     assert isinstance(board, RustyBoardChi)
     return shakmaty_python_binding.MyMove(move_uci, board.chess_)
 

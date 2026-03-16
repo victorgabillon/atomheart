@@ -27,7 +27,13 @@ See the repos
 
 ```bash
 pip install atomheart
+pip install atomheart[chess]
+pip install atomheart[chess-rust]
+pip install atomheart[all]
 ```
+
+The base install keeps the lightweight core games available. Chess support is
+optional, and the Rust-backed chess board is enabled by the `chess-rust` extra.
 
 ## Quick Start
 

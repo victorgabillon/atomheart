@@ -1,14 +1,10 @@
-"""atomheart: multiple board-game environments and Valanga adapters.
+"""atomheart: board-game environments and Valanga adapters.
 
-The clean public API is through game-specific modules:
-- atomheart.games.checkers
-- atomheart.games.chess
-- atomheart.games.integer_reduction
-- atomheart.games.morpion
-- atomheart.games.nim
+Core lightweight games are always available. Chess support is optional and
+becomes available when the chess extra dependencies are installed.
 """
 
-from importlib.util import find_spec
+from importlib import import_module
 
 from . import games
 from .games.checkers import (
@@ -45,25 +41,22 @@ __all__ = [
     "games",
 ]
 
-if find_spec("chess") is not None:
-    from .games.chess import BoardChi, ChessDynamics, ChessState  # noqa: F401
-
+try:
+    _chess = import_module("atomheart.games.chess")
+except ImportError:
+    # Optional chess dependencies are not installed.
+    pass
+else:
+    BoardChi = _chess.BoardChi
+    ChessDynamics = _chess.ChessDynamics
+    ChessState = _chess.ChessState
+    create_board_chi = _chess.create_board_chi
+    create_board_chi_from_pychess_board = _chess.create_board_chi_from_pychess_board
     __all__.extend(
         [
             "BoardChi",
             "ChessDynamics",
             "ChessState",
-        ]
-    )
-
-if find_spec("chess") is not None:
-    from .games.chess import (  # noqa: F401
-        create_board_chi,
-        create_board_chi_from_pychess_board,
-    )
-
-    __all__.extend(
-        [
             "create_board_chi",
             "create_board_chi_from_pychess_board",
         ]

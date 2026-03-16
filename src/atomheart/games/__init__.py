@@ -1,20 +1,18 @@
-"""Collection of game modules supported by atomheart.
+"""Game namespaces exposed by atomheart.
 
-Available games:
-- checkers: International checkers/draughts
-- chess: Standard chess (requires chess and optionally shakmaty_python_binding)
-- integer_reduction: Single-player integer reduction toy game
-- nim: Single-pile subtraction Nim
-- morpion: Morpion Solitaire (5T/5D variants)
+Core lightweight games are always available. Chess is listed only when the
+optional chess dependency is installed.
 """
+
+from importlib import import_module
 
 from . import checkers, integer_reduction, morpion, nim
 
 __all__ = ["checkers", "integer_reduction", "morpion", "nim"]
 
 try:
-    from . import chess  # noqa: F401
-
-    __all__.append("chess")
+    chess = import_module("atomheart.games.chess")
 except ImportError:
     pass
+else:
+    __all__.append("chess")
