@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import valanga
 from valanga.over_event import HowOver, Winner
 
-from .state import IntegerReductionState
+from atomheart.games._branch_key_gen import TupleBranchKeyGen
 
-if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+from .state import IntegerReductionState
 
 type IntegerReductionAction = Literal["dec1", "half"]
 
@@ -69,46 +68,6 @@ class IntegerReductionActionTypeError(TypeError):
         return cls("Integer reduction actions must be 'dec1' or 'half'.")
 
 
-class _ActionBranchKeyGen(valanga.BranchKeyGeneratorP[IntegerReductionAction]):
-    """Small resettable in-memory branch-key generator."""
-
-    sort_branch_keys: bool = False
-
-    def __init__(self, actions: Sequence[IntegerReductionAction]) -> None:
-        """Store action keys for deterministic iteration."""
-        self._actions = tuple(actions)
-        self._index = 0
-
-    @property
-    def all_generated_keys(self) -> Sequence[IntegerReductionAction] | None:
-        """Return all action keys known to this generator."""
-        return self._actions
-
-    def __iter__(self) -> Iterator[IntegerReductionAction]:
-        """Return the iterator protocol self."""
-        return self
-
-    def __next__(self) -> IntegerReductionAction:
-        """Return the next action key or raise ``StopIteration``."""
-        if self._index >= len(self._actions):
-            raise StopIteration
-        action = self._actions[self._index]
-        self._index += 1
-        return action
-
-    def more_than_one(self) -> bool:
-        """Return whether more than one action is available."""
-        return len(self._actions) > 1
-
-    def get_all(self) -> Sequence[IntegerReductionAction]:
-        """Return all action keys as a new list."""
-        return list(self._actions)
-
-    def copy_with_reset(self) -> _ActionBranchKeyGen:
-        """Return a fresh generator reset to the first action."""
-        return _ActionBranchKeyGen(self._actions)
-
-
 def _build_transition(
     next_state: IntegerReductionState,
     *,
@@ -136,7 +95,7 @@ class IntegerReductionDynamics(valanga.Dynamics[IntegerReductionState]):
         state: IntegerReductionState,
     ) -> valanga.BranchKeyGeneratorP[IntegerReductionAction]:
         """Return legal actions for ``state`` in deterministic order."""
-        return _ActionBranchKeyGen(self._legal_actions_for_state(state))
+        return TupleBranchKeyGen(self._legal_actions_for_state(state))
 
     def step(
         self,

@@ -5,6 +5,7 @@ The clean public API is through game-specific modules:
 - atomheart.games.chess
 - atomheart.games.integer_reduction
 - atomheart.games.morpion
+- atomheart.games.nim
 """
 
 from importlib.util import find_spec
@@ -23,6 +24,7 @@ from .games.integer_reduction import (
     IntegerReductionUndo,
 )
 from .games.morpion import MorpionDynamics, MorpionState, Variant
+from .games.nim import NimDynamics, NimReversibleDynamics, NimState, NimUndo
 
 __all__ = [
     "CheckersDynamics",
@@ -35,6 +37,10 @@ __all__ = [
     "IntegerReductionUndo",
     "MorpionDynamics",
     "MorpionState",
+    "NimDynamics",
+    "NimReversibleDynamics",
+    "NimState",
+    "NimUndo",
     "Variant",
     "games",
 ]
