@@ -3,12 +3,13 @@
 Available games:
 - checkers: International checkers/draughts
 - chess: Standard chess (requires chess and optionally shakmaty_python_binding)
+- integer_reduction: Single-player integer reduction toy game
 - morpion: Morpion Solitaire (5T/5D variants)
 """
 
-from . import checkers, morpion
+from . import checkers, integer_reduction, morpion
 
-__all__ = ["checkers", "morpion"]
+__all__ = ["checkers", "integer_reduction", "morpion"]
 
 try:
     from . import chess  # noqa: F401

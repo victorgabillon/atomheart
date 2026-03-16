@@ -3,6 +3,7 @@
 The clean public API is through game-specific modules:
 - atomheart.games.checkers
 - atomheart.games.chess
+- atomheart.games.integer_reduction
 - atomheart.games.morpion
 """
 
@@ -15,6 +16,12 @@ from .games.checkers import (
     CheckersRules,
     CheckersState,
 )
+from .games.integer_reduction import (
+    IntegerReductionDynamics,
+    IntegerReductionReversibleDynamics,
+    IntegerReductionState,
+    IntegerReductionUndo,
+)
 from .games.morpion import MorpionDynamics, MorpionState, Variant
 
 __all__ = [
@@ -22,6 +29,10 @@ __all__ = [
     "CheckersReversibleDynamics",
     "CheckersRules",
     "CheckersState",
+    "IntegerReductionDynamics",
+    "IntegerReductionReversibleDynamics",
+    "IntegerReductionState",
+    "IntegerReductionUndo",
     "MorpionDynamics",
     "MorpionState",
     "Variant",
