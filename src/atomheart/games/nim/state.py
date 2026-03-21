@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, TypeAlias
 
 import valanga
+
+if TYPE_CHECKING:
+    _ColorTurnState: TypeAlias = valanga.TurnState[valanga.Color]  # noqa: UP040
+else:
+    _ColorTurnState = object
 
 
 def _turn_prefix(turn: valanga.Color) -> str:
@@ -13,7 +19,7 @@ def _turn_prefix(turn: valanga.Color) -> str:
 
 
 @dataclass(frozen=True, slots=True, init=False)
-class NimState(valanga.TurnState):
+class NimState(_ColorTurnState):
     """Immutable state for single-pile subtraction Nim."""
 
     stones: int

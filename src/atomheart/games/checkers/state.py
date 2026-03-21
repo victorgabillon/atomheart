@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 import valanga
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    _ColorTurnState: TypeAlias = valanga.TurnState[valanga.Color]  # noqa: UP040
+else:
+    _ColorTurnState = object
 
 _TEXT_RE = re.compile(
     r"^\s*([WB])\s*;\s*ply\s*=\s*(\d+)\s*;\s*W\s*=\s*([^;]*)\s*;\s*B\s*=\s*([^;]*)\s*$",
@@ -71,7 +75,7 @@ def _parse_piece_list(text: str) -> tuple[int, int]:
 
 
 @dataclass(frozen=True, slots=True)
-class CheckersState(valanga.TurnState):
+class CheckersState(_ColorTurnState):
     """Turn state for 32-square bitboard checkers."""
 
     wm: int

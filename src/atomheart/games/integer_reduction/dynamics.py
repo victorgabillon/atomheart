@@ -1,12 +1,13 @@
 """Valanga dynamics adapter for the integer reduction game."""
 
+# pylint: disable=duplicate-code
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal
 
 import valanga
-from valanga.over_event import HowOver, Winner
 
 from atomheart.games._branch_key_gen import TupleBranchKeyGen
 
@@ -72,7 +73,7 @@ def _build_transition(
     next_state: IntegerReductionState,
     *,
     is_over: bool,
-    over_event: valanga.OverEvent | None,
+    over_event: valanga.OverEvent[valanga.SoloRole] | None,
     action: IntegerReductionAction,
 ) -> valanga.Transition[IntegerReductionState]:
     """Build transition metadata for integer reduction."""
@@ -82,7 +83,7 @@ def _build_transition(
         modifications=None,
         info=transition_info,
         is_over=is_over,
-        over_event=over_event,
+        over_event=over_event,  # type: ignore[arg-type]
     )
 
 
@@ -114,14 +115,13 @@ class IntegerReductionDynamics(valanga.Dynamics[IntegerReductionState]):
         next_state = IntegerReductionState(next_value)
         is_over = next_state.is_game_over()
 
-        over_event: valanga.OverEvent | None = None
+        over_event: valanga.OverEvent[valanga.SoloRole] | None = None
         if is_over:
-            # Valanga's OverEvent is two-player-oriented; we encode one-player
-            # completion as a draw with no winner and a simple termination tag.
-            over_event = valanga.OverEvent(
-                HowOver.DRAW,
-                Winner.NO_KNOWN_WINNER,
-                "reached_one",  # type: ignore[arg-type]
+            # Reaching one is a successful terminal state without a role winner.
+            over_event = valanga.OverEvent[valanga.SoloRole](
+                outcome=valanga.Outcome.WIN,
+                termination="reached_one",  # type: ignore[arg-type]
+                winner=None,
             )
 
         return _build_transition(

@@ -6,7 +6,6 @@ from functools import lru_cache
 
 import pytest
 import valanga
-from valanga.over_event import HowOver, Winner
 
 from atomheart.games.nim import NimDynamics, NimState
 
@@ -85,14 +84,14 @@ def test_action_name_roundtrip() -> None:
             1,
             NimState(0, valanga.Color.BLACK),
             True,
-            Winner.WHITE,
+            valanga.Color.WHITE,
         ),
         (
             NimState(2, valanga.Color.BLACK),
             2,
             NimState(0, valanga.Color.WHITE),
             True,
-            Winner.BLACK,
+            valanga.Color.BLACK,
         ),
     ],
 )
@@ -101,7 +100,7 @@ def test_step_behavior(
     action: int,
     expected_state: NimState,
     expected_is_over: bool,
-    expected_winner: Winner | None,
+    expected_winner: valanga.Color | None,
 ) -> None:
     """Transitions should update stones, turn, and winner metadata correctly."""
     dynamics = NimDynamics()
@@ -114,9 +113,11 @@ def test_step_behavior(
 
     if expected_is_over:
         assert transition.over_event is not None
-        assert transition.over_event.how_over == HowOver.WIN
-        assert transition.over_event.who_is_winner == expected_winner
+        assert transition.over_event.outcome == valanga.Outcome.WIN
+        assert transition.over_event.winner == expected_winner
         assert transition.over_event.termination == "last_stone"
+        assert expected_winner is not None
+        assert transition.over_event.is_win_for(expected_winner)
     else:
         assert transition.over_event is None
 

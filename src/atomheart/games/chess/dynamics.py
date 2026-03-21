@@ -3,7 +3,6 @@
 from typing import TYPE_CHECKING, cast
 
 import valanga
-from valanga.over_event import HowOver, Winner
 
 from .state import ChessState
 
@@ -12,6 +11,15 @@ if TYPE_CHECKING:
 
     from atomheart.games.chess.board.iboard import IBoard
     from atomheart.games.chess.move.imove import MoveKey
+
+
+class UnsupportedTerminalChessResultError(ValueError):
+    """Raised when a terminal chess board reports an unknown result string."""
+
+    @classmethod
+    def for_result(cls, result: str) -> "UnsupportedTerminalChessResultError":
+        """Build an error for an unsupported terminal result."""
+        return cls(f"Unsupported terminal chess result: {result!r}")
 
 
 class ChessDynamics(valanga.Dynamics[ChessState]):
@@ -33,7 +41,7 @@ class ChessDynamics(valanga.Dynamics[ChessState]):
         mods = board2.play_move_key(move_key)
         is_over = board2.is_game_over()
 
-        over_event: valanga.OverEvent | None = None
+        over_event: valanga.OverEvent[valanga.Role] | None = None
         if is_over:
             over_event = _over_event_from_board(board2)
 
@@ -58,26 +66,30 @@ class ChessDynamics(valanga.Dynamics[ChessState]):
         return state.board.get_move_key_from_uci(name)
 
 
-def _over_event_from_board(board: "IBoard") -> valanga.OverEvent:
+def _over_event_from_board(board: "IBoard") -> valanga.OverEvent[valanga.Role]:
     """Convert board end-of-game info into a Valanga over event."""
     result = board.result(claim_draw=True)
     termination: chess.Termination | None = board.termination()
 
     if result == "1-0":
-        return valanga.OverEvent(HowOver.WIN, Winner.WHITE, termination)
+        return valanga.OverEvent(
+            outcome=valanga.Outcome.WIN,
+            termination=termination,
+            winner=valanga.Color.WHITE,
+        )
 
     if result == "0-1":
-        return valanga.OverEvent(HowOver.WIN, Winner.BLACK, termination)
+        return valanga.OverEvent(
+            outcome=valanga.Outcome.WIN,
+            termination=termination,
+            winner=valanga.Color.BLACK,
+        )
 
     if result == "1/2-1/2":
         return valanga.OverEvent(
-            HowOver.DRAW,
-            Winner.NO_KNOWN_WINNER,
-            termination,
+            outcome=valanga.Outcome.DRAW,
+            termination=termination,
+            winner=None,
         )
 
-    return valanga.OverEvent(
-        HowOver.DO_NOT_KNOW_OVER,
-        Winner.NO_KNOWN_WINNER,
-        termination,
-    )
+    raise UnsupportedTerminalChessResultError.for_result(result)

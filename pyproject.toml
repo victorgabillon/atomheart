@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "atomheart"
-version = "0.2.3"
+version = "0.2.4"
 description = "Board game environments and Valanga adapters"
 requires-python = ">=3.13"
 dependencies = [
     "rich",
-    "valanga >=0.2.0",
+    "valanga ==0.2.3",
     "PyYAML",
 ]
 
@@ -207,7 +207,7 @@ package = "skip"
 deps = [
   # runtime deps (match [project].dependencies)
   "rich",
-  "valanga>=0.2.0",
+  "valanga==0.2.3",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",
@@ -230,7 +230,7 @@ package = "skip"
 deps = [
   # runtime deps
   "rich",
-  "valanga>=0.2.0",
+  "valanga==0.2.3",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",

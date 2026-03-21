@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from typing import cast
 
 import valanga
-from valanga.over_event import HowOver, Winner
 
 from .apply import apply_move
 from .generation import generate_legal_moves
@@ -35,25 +34,35 @@ class CheckersDynamics(valanga.Dynamics[CheckersState]):
         move = self._as_move_key(action)
         next_state = self._apply_move(state, move)
 
-        over_event: valanga.OverEvent | None = None
+        over_event: valanga.OverEvent[valanga.Role] | None = None
         is_over = False
 
         if next_state.is_game_over():
             is_over = True
             winner = (
-                Winner.BLACK if (next_state.wm | next_state.wk) == 0 else Winner.WHITE
+                valanga.Color.BLACK
+                if (next_state.wm | next_state.wk) == 0
+                else valanga.Color.WHITE
             )
-            over_event = valanga.OverEvent(HowOver.WIN, winner, "piece_exhaustion")  # type: ignore[arg-type]
+            over_event = valanga.OverEvent(
+                outcome=valanga.Outcome.WIN,
+                termination="piece_exhaustion",  # type: ignore[arg-type]
+                winner=winner,
+            )
         else:
             next_moves = self.legal_actions(next_state).get_all()
             if len(next_moves) == 0:
                 is_over = True
                 winner = (
-                    Winner.BLACK
+                    valanga.Color.BLACK
                     if next_state.turn == valanga.Color.WHITE
-                    else Winner.WHITE
+                    else valanga.Color.WHITE
                 )
-                over_event = valanga.OverEvent(HowOver.WIN, winner, "no_moves")  # type: ignore[arg-type]
+                over_event = valanga.OverEvent(
+                    outcome=valanga.Outcome.WIN,
+                    termination="no_moves",  # type: ignore[arg-type]
+                    winner=winner,
+                )
 
         return valanga.Transition(
             next_state=next_state,

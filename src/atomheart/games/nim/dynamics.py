@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Literal
 
 import valanga
-from valanga.over_event import HowOver, Winner
 
 from atomheart.games._branch_key_gen import TupleBranchKeyGen
 
@@ -23,11 +22,6 @@ _ALL_ACTIONS: tuple[NimAction, ...] = (1, 2, 3)
 def _other_turn(turn: valanga.Color) -> valanga.Color:
     """Return the opposite side to move."""
     return valanga.Color.BLACK if turn == valanga.Color.WHITE else valanga.Color.WHITE
-
-
-def _winner_for_turn(turn: valanga.Color) -> Winner:
-    """Return the Valanga winner enum for the moving side."""
-    return Winner.WHITE if turn == valanga.Color.WHITE else Winner.BLACK
 
 
 @dataclass(slots=True)
@@ -59,14 +53,14 @@ class NimDynamics(valanga.Dynamics[NimState]):
         )
         is_over = next_state.is_game_over()
 
-        over_event: valanga.OverEvent | None = None
+        over_event: valanga.OverEvent[valanga.Role] | None = None
         if is_over:
             # The player who just moved takes the last stone and wins, even
             # though ``next_state.turn`` already points to the opponent.
             over_event = valanga.OverEvent(
-                HowOver.WIN,
-                _winner_for_turn(state.turn),
-                "last_stone",  # type: ignore[arg-type]
+                outcome=valanga.Outcome.WIN,
+                termination="last_stone",  # type: ignore[arg-type]
+                winner=state.turn,
             )
 
         transition_info = {"action": normalized_action}

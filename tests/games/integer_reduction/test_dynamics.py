@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 
 import pytest
-from valanga.over_event import HowOver, Winner
+import valanga
 
 from atomheart.games.integer_reduction import (
     IntegerReductionDynamics,
@@ -71,8 +71,8 @@ def test_step_behavior(
 
     if expected_is_over:
         assert transition.over_event is not None
-        assert transition.over_event.how_over == HowOver.DRAW
-        assert transition.over_event.who_is_winner == Winner.NO_KNOWN_WINNER
+        assert transition.over_event.outcome == valanga.Outcome.WIN
+        assert transition.over_event.winner is None
         assert transition.over_event.termination == "reached_one"
     else:
         assert transition.over_event is None

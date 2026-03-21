@@ -1,1 +1,1 @@
-
+"""Nim game tests."""

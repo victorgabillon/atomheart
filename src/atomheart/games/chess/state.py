@@ -1,16 +1,20 @@
 """Chess state wrapper for Valanga."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 import valanga
 
 if TYPE_CHECKING:
     from atomheart.games.chess.board.iboard import IBoard
 
+    _ColorTurnState: TypeAlias = valanga.TurnState[valanga.Color]  # noqa: UP040
+else:
+    _ColorTurnState = object
+
 
 @dataclass(frozen=True, slots=True)
-class ChessState(valanga.TurnState):
+class ChessState(_ColorTurnState):
     """Pure observation wrapper around an :class:`IBoard`."""
 
     board: "IBoard"

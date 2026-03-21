@@ -20,6 +20,15 @@ from atomheart.games.checkers.rules import CheckersRules
 from atomheart.games.checkers.state import CheckersState
 
 
+class CrowningContinuationScenarioError(AssertionError):
+    """Raised when the crowning continuation fixture cannot be constructed."""
+
+    @classmethod
+    def default(cls) -> "CrowningContinuationScenarioError":
+        """Build the default fixture-construction failure."""
+        return cls("Could not construct crowning-continuation scenario.")
+
+
 def test_initial_position_has_legal_moves() -> None:
     """Initial position should generate non-empty legal moves for white."""
     moves = generate_legal_moves(CheckersState.standard(), CheckersRules())
@@ -193,7 +202,7 @@ def _find_crowning_continuation_case() -> CheckersState:
                     turn=valanga.Color.WHITE,
                 )
 
-    raise AssertionError("Could not construct crowning-continuation scenario.")
+    raise CrowningContinuationScenarioError.default()
 
 
 def test_crowning_ends_turn_rule_controls_capture_continuation() -> None:

@@ -1,1 +1,1 @@
-
+"""Integer reduction game tests."""
