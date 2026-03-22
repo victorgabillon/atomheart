@@ -47,17 +47,18 @@ except ImportError:
     # Optional chess dependencies are not installed.
     pass
 else:
-    BoardChi = _chess.BoardChi
     ChessDynamics = _chess.ChessDynamics
     ChessState = _chess.ChessState
-    create_board_chi = _chess.create_board_chi
-    create_board_chi_from_pychess_board = _chess.create_board_chi_from_pychess_board
-    __all__.extend(
-        [
-            "BoardChi",
-            "ChessDynamics",
-            "ChessState",
-            "create_board_chi",
-            "create_board_chi_from_pychess_board",
-        ]
-    )
+    __all__.extend(["ChessDynamics", "ChessState"])
+
+    if hasattr(_chess, "BoardChi"):
+        BoardChi = _chess.BoardChi
+        create_board_chi = _chess.create_board_chi
+        create_board_chi_from_pychess_board = _chess.create_board_chi_from_pychess_board
+        __all__.extend(
+            [
+                "BoardChi",
+                "create_board_chi",
+                "create_board_chi_from_pychess_board",
+            ]
+        )
