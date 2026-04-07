@@ -23,6 +23,14 @@ class Variant(StrEnum):
     DISJOINT_5D = "5D"
 
 
+class NonAxisAlignedSegmentError(ValueError):
+    """Raised when a segment is not horizontal or vertical."""
+
+    def __init__(self) -> None:
+        """Initialize the error with the canonical Morpion constraint message."""
+        super().__init__("Classic Morpion start only uses axis-aligned segments.")
+
+
 def norm_seg(a: Point, b: Point) -> Segment:
     """Return a normalized unit segment with deterministic endpoint ordering."""
     return (a, b) if a <= b else (b, a)
@@ -36,7 +44,7 @@ def _points_on_axis_aligned_segment(start: Point, end: Point) -> set[Point]:
         return {(x0, y) for y in range(min(y0, y1), max(y0, y1) + 1)}
     if y0 == y1:
         return {(x, y0) for x in range(min(x0, x1), max(x0, x1) + 1)}
-    raise ValueError("Classic Morpion start only uses axis-aligned segments.")
+    raise NonAxisAlignedSegmentError
 
 
 def standard_initial_points_classic() -> frozenset[Point]:
