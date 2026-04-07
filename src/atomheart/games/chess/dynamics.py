@@ -37,7 +37,7 @@ class ChessDynamics(valanga.Dynamics[ChessState]):
         """Copy and advance the board with ``action``."""
         move_key = cast("MoveKey", action)
 
-        board2 = state.board.copy(stack=False, deep_copy_legal_moves=True)
+        board2 = state.board.copy(stack=True, deep_copy_legal_moves=True)
         mods = board2.play_move_key(move_key)
         is_over = board2.is_game_over()
 

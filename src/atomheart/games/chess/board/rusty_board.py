@@ -262,7 +262,7 @@ class RustyBoardChi(IBoard):
 
     def __post_init__(self) -> None:
         """Initialize repetition counters after dataclass creation."""
-        self.rep_to_count[self.fast_representation_without_counters] = 1
+        self.rep_to_count.setdefault(self.fast_representation_without_counters, 1)
 
     def __str__(self) -> str:
         """Return a string representation of the board.

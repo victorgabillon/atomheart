@@ -28,16 +28,42 @@ def norm_seg(a: Point, b: Point) -> Segment:
     return (a, b) if a <= b else (b, a)
 
 
+def _points_on_axis_aligned_segment(start: Point, end: Point) -> set[Point]:
+    """Enumerate all lattice points on one horizontal or vertical segment."""
+    x0, y0 = start
+    x1, y1 = end
+    if x0 == x1:
+        return {(x0, y) for y in range(min(y0, y1), max(y0, y1) + 1)}
+    if y0 == y1:
+        return {(x, y0) for x in range(min(x0, x1), max(x0, x1) + 1)}
+    raise ValueError("Classic Morpion start only uses axis-aligned segments.")
+
+
+def standard_initial_points_classic() -> frozenset[Point]:
+    """Return the canonical 36-point Greek-cross start position."""
+    outline_segments: tuple[Segment, ...] = (
+        ((-2, 4), (1, 4)),
+        ((1, 4), (1, 1)),
+        ((1, 1), (4, 1)),
+        ((4, 1), (4, -2)),
+        ((4, -2), (1, -2)),
+        ((1, -2), (1, -5)),
+        ((1, -5), (-2, -5)),
+        ((-2, -5), (-2, -2)),
+        ((-2, -2), (-5, -2)),
+        ((-5, -2), (-5, 1)),
+        ((-5, 1), (-2, 1)),
+        ((-2, 1), (-2, 4)),
+    )
+    points: set[Point] = set()
+    for segment in outline_segments:
+        points.update(_points_on_axis_aligned_segment(*segment))
+    return frozenset(points)
+
+
 def standard_initial_points_a4() -> frozenset[Point]:
-    """Return the standard 36-point ``A4`` cross start position."""
-    pts: set[Point] = set()
-    for y in (-1, 0):
-        for x in range(-5, 5):
-            pts.add((x, y))
-    for x in (-1, 0):
-        for y in range(-5, 5):
-            pts.add((x, y))
-    return frozenset(pts)
+    """Return the standard 36-point ``A4`` Greek-cross start position."""
+    return standard_initial_points_classic()
 
 
 @dataclass(frozen=True, slots=True)
