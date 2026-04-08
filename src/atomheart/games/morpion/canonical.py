@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
 
 Point = tuple[int, int]
 Move = tuple[int, int, int, int]
+
+
+class MorpionSymmetryIndexError(ValueError):
+    """Raised when a symmetry index is outside the supported D4 range."""
+
+    def __init__(self, sym: int) -> None:
+        """Build the invalid-symmetry error message."""
+        super().__init__(f"Invalid symmetry index: {sym}")
 
 
 def _norm_move_endpoints(p1: Point, p2: Point) -> Move:
@@ -34,10 +45,10 @@ def _apply_origin_symmetry(p: Point, sym: int) -> Point:
         return (y, x)
     if sym == 7:
         return (-y, -x)
-    raise ValueError(f"Invalid symmetry index: {sym}")
+    raise MorpionSymmetryIndexError(sym)
 
 
-def _apply_rooted_symmetry(p: Point, sym: int) -> Point:
+def apply_rooted_symmetry(p: Point, sym: int) -> Point:
     """Apply one rooted D4 symmetry around the fixed Morpion start center."""
     x, y = p
     if sym == 0:
@@ -56,7 +67,7 @@ def _apply_rooted_symmetry(p: Point, sym: int) -> Point:
         return (y, x)
     if sym == 7:
         return (-y - 1, -x - 1)
-    raise ValueError(f"Invalid symmetry index: {sym}")
+    raise MorpionSymmetryIndexError(sym)
 
 
 def _transform_move(
@@ -71,6 +82,11 @@ def _transform_move(
     return _norm_move_endpoints(p1, p2)
 
 
+def _transform_move_rooted(move: Move, sym: int) -> Move:
+    """Apply one rooted symmetry to a Morpion move."""
+    return _transform_move(move, sym, apply_rooted_symmetry)
+
+
 def _translate_move(move: Move, dx: int, dy: int) -> Move:
     """Translate one move so ``(dx, dy)`` becomes the origin."""
     x1, y1, x2, y2 = move
@@ -82,8 +98,7 @@ def _translate_move(move: Move, dx: int, dy: int) -> Move:
 def canonical_move_set_tag_d4(played_moves: Iterable[Move]) -> tuple[Move, ...]:
     """Return a D4-invariant canonical move-set tag for the fixed start."""
     base_moves = tuple(
-        _norm_move_endpoints((x1, y1), (x2, y2))
-        for (x1, y1, x2, y2) in played_moves
+        _norm_move_endpoints((x1, y1), (x2, y2)) for (x1, y1, x2, y2) in played_moves
     )
 
     if not base_moves:
@@ -93,11 +108,31 @@ def canonical_move_set_tag_d4(played_moves: Iterable[Move]) -> tuple[Move, ...]:
 
     for sym in range(8):
         transformed = tuple(
-            _transform_move(move, sym, _apply_rooted_symmetry) for move in base_moves
+            _transform_move(move, sym, apply_rooted_symmetry) for move in base_moves
         )
         candidates.append(tuple(sorted(transformed)))
 
     return min(candidates)
+
+
+def rooted_move_set_symmetry_stabilizer(
+    played_moves: Iterable[Move],
+) -> tuple[int, ...]:
+    """Return rooted symmetries that preserve the provided move set."""
+    base_moves = frozenset(
+        _norm_move_endpoints((x1, y1), (x2, y2)) for (x1, y1, x2, y2) in played_moves
+    )
+    if not base_moves:
+        return tuple(range(8))
+
+    stabilizer: list[int] = []
+    for sym in range(8):
+        transformed = frozenset(
+            _transform_move_rooted(move, sym) for move in base_moves
+        )
+        if transformed == base_moves:
+            stabilizer.append(sym)
+    return tuple(stabilizer)
 
 
 def canonical_move_set_tag_d4_translation(
@@ -105,8 +140,7 @@ def canonical_move_set_tag_d4_translation(
 ) -> tuple[Move, ...]:
     """Return a D4- and translation-invariant free-shape canonical tag."""
     base_moves = tuple(
-        _norm_move_endpoints((x1, y1), (x2, y2))
-        for (x1, y1, x2, y2) in played_moves
+        _norm_move_endpoints((x1, y1), (x2, y2)) for (x1, y1, x2, y2) in played_moves
     )
 
     if not base_moves:
@@ -146,9 +180,11 @@ def canonical_move_set_hash(played_moves: Iterable[Move]) -> int:
 __all__ = [
     "Move",
     "Point",
-    "_apply_rooted_symmetry",
+    "_transform_move_rooted",
+    "apply_rooted_symmetry",
     "canonical_move_set_hash",
     "canonical_move_set_tag",
     "canonical_move_set_tag_d4",
     "canonical_move_set_tag_d4_translation",
+    "rooted_move_set_symmetry_stabilizer",
 ]

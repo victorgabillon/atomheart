@@ -4,11 +4,11 @@ from atomheart.games.morpion import (
     MorpionDynamics,
     Variant,
     action_to_played_move,
+    apply_rooted_symmetry,
     canonical_move_set_tag,
     canonical_move_set_tag_d4_translation,
     initial_state,
 )
-from atomheart.games.morpion.canonical import _apply_rooted_symmetry
 from atomheart.games.morpion.state import standard_initial_points_a4
 
 
@@ -40,7 +40,7 @@ def test_rooted_symmetries_preserve_initial_cross() -> None:
     points = standard_initial_points_a4()
 
     for sym in range(8):
-        transformed = {_apply_rooted_symmetry(p, sym) for p in points}
+        transformed = {apply_rooted_symmetry(p, sym) for p in points}
         assert transformed == set(points)
 
 
@@ -48,7 +48,7 @@ def test_canonical_move_set_tag_rotation_invariance() -> None:
     """Rotated move-sets should share the same canonical tag."""
     moves1 = {(0, 0, 4, 0), (4, 0, 4, 4)}
     rotated = {
-        _apply_rooted_symmetry((x1, y1), 1) + _apply_rooted_symmetry((x2, y2), 1)
+        apply_rooted_symmetry((x1, y1), 1) + apply_rooted_symmetry((x2, y2), 1)
         for (x1, y1, x2, y2) in moves1
     }
 
@@ -59,7 +59,7 @@ def test_canonical_move_set_tag_reflection_invariance() -> None:
     """Reflected move-sets should share the same canonical tag."""
     moves1 = {(0, 0, 4, 0), (4, 0, 4, 4)}
     reflected = {
-        _apply_rooted_symmetry((x1, y1), 4) + _apply_rooted_symmetry((x2, y2), 4)
+        apply_rooted_symmetry((x1, y1), 4) + apply_rooted_symmetry((x2, y2), 4)
         for (x1, y1, x2, y2) in moves1
     }
 

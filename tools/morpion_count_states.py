@@ -4,6 +4,7 @@
 Example:
     python tools/morpion_count_states.py --depth 3 --variant 5T
     python tools/morpion_count_states.py --depth 4 --variant 5D --show-samples
+
 """
 
 from __future__ import annotations
@@ -44,7 +45,12 @@ def _load_module(name: str, path: Path) -> ModuleType:
 
 
 try:
-    from atomheart.games.morpion import MorpionDynamics, MorpionState, Variant, initial_state
+    from atomheart.games.morpion import (
+        MorpionDynamics,
+        MorpionState,
+        Variant,
+        initial_state,
+    )
 except Exception:
     _ensure_package("atomheart", SRC_DIR / "atomheart")
     _ensure_package("atomheart.games", SRC_DIR / "atomheart" / "games")

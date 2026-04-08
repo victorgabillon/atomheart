@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 import valanga
 
-from .canonical import Move
+from .canonical import (
+    Move,
+    apply_rooted_symmetry,
+    rooted_move_set_symmetry_stabilizer,
+)
 from .state import Dir, MorpionState, Point, Segment, Variant, norm_seg
 
 if TYPE_CHECKING:
@@ -70,6 +75,23 @@ class MorpionActionTypeError(TypeError):
         )
 
 
+class MorpionActionReconstructionError(ValueError):
+    """Raised when transformed Morpion points cannot be re-normalized as an action."""
+
+    @classmethod
+    def expected_distinct_points(cls) -> MorpionActionReconstructionError:
+        """Create error for malformed five-point action reconstructions."""
+        return cls("Morpion action reconstruction expects five distinct points.")
+
+    @classmethod
+    def could_not_normalize(
+        cls,
+        points5: tuple[Point, Point, Point, Point, Point],
+    ) -> MorpionActionReconstructionError:
+        """Create error for unrecognized five-point configurations."""
+        return cls(f"Could not normalize Morpion action points: {points5!r}")
+
+
 def _as_action(action: valanga.BranchKey) -> Action:
     """Validate and cast a generic branch key to Morpion ``Action``."""
     if not isinstance(action, tuple):
@@ -98,7 +120,11 @@ class _ListBranchKeyGen(valanga.BranchKeyGeneratorP[valanga.BranchKey]):
     ) -> None:
         """Store keys for deterministic iteration."""
         self.sort_branch_keys = sort_branch_keys
-        self._keys = sorted(keys, key=repr) if self.sort_branch_keys else list(keys)
+        self._keys: list[valanga.BranchKey]
+        if self.sort_branch_keys:
+            self._keys = sorted(keys, key=repr)
+        else:
+            self._keys = list(keys)
         self._i = 0
 
     @property
@@ -168,6 +194,55 @@ def action_to_played_move(action: valanga.BranchKey) -> Move:
     return (end[0], end[1], start[0], start[1])
 
 
+def _points5_to_action(
+    points5: tuple[Point, Point, Point, Point, Point],
+    missing_point: Point,
+) -> Action:
+    """Normalize five collinear points back into the canonical action tuple."""
+    point_set = frozenset(points5)
+    if len(point_set) != 5 or missing_point not in point_set:
+        raise MorpionActionReconstructionError.expected_distinct_points()
+
+    start = min(point_set)
+    for dir_index, direction in enumerate(DIRECTIONS):
+        candidate = _line_points(start[0], start[1], direction)
+        if frozenset(candidate) != point_set:
+            continue
+        return (dir_index, start[0], start[1], candidate.index(missing_point))
+    raise MorpionActionReconstructionError.could_not_normalize(points5)
+
+
+def transform_action_rooted(action: Action, sym: int) -> Action:
+    """Transform one Morpion action by a rooted symmetry and renormalize it."""
+    dir_index, x0, y0, missing_i = _as_action(action)
+    points5 = _line_points(x0, y0, DIRECTIONS[dir_index])
+    transformed_points5 = (
+        apply_rooted_symmetry(points5[0], sym),
+        apply_rooted_symmetry(points5[1], sym),
+        apply_rooted_symmetry(points5[2], sym),
+        apply_rooted_symmetry(points5[3], sym),
+        apply_rooted_symmetry(points5[4], sym),
+    )
+    transformed_missing_point = transformed_points5[missing_i]
+    return _points5_to_action(transformed_points5, transformed_missing_point)
+
+
+def state_rooted_symmetry_stabilizer(state: MorpionState) -> tuple[int, ...]:
+    """Return rooted symmetries that preserve the current Morpion state."""
+    if len(state.played_moves) != state.moves:
+        # Legacy handcrafted states without a full move history cannot safely be
+        # quotiented, so fall back to the identity symmetry only.
+        return (0,)
+    return rooted_move_set_symmetry_stabilizer(state.played_moves)
+
+
+def canonical_action_in_state(state: MorpionState, action: valanga.BranchKey) -> Action:
+    """Return the canonical representative of one action under the state stabilizer."""
+    normalized_action = _as_action(action)
+    stabilizer = state_rooted_symmetry_stabilizer(state)
+    return min(transform_action_rooted(normalized_action, sym) for sym in stabilizer)
+
+
 def _point_usage_kind(index: int) -> int:
     """Return usage kind bitmask for line point index."""
     return 1 if index in (0, 4) else 2
@@ -228,8 +303,48 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
         state: MorpionState,
     ) -> valanga.BranchKeyGeneratorP[valanga.BranchKey]:
         """Return legal action keys for ``state``."""
-        actions = list(self._enumerate_actions(state))
+        actions = self.unique_legal_actions(state)
         return _ListBranchKeyGen(actions, sort_branch_keys=True)
+
+    def all_legal_actions(self, state: MorpionState) -> tuple[Action, ...]:
+        """Return the full raw legal-action list for the provided state."""
+        return tuple(sorted(self._enumerate_raw_actions(state)))
+
+    def legal_action_orbits(
+        self, state: MorpionState
+    ) -> tuple[tuple[Action, ...], ...]:
+        """Return the raw legal actions partitioned by rooted symmetry orbit."""
+        stabilizer = state_rooted_symmetry_stabilizer(state)
+        groups: dict[Action, list[Action]] = defaultdict(list)
+        for action in self.all_legal_actions(state):
+            representative = min(
+                transform_action_rooted(action, sym) for sym in stabilizer
+            )
+            groups[representative].append(action)
+
+        return tuple(
+            tuple(sorted(actions))
+            for _, actions in sorted(groups.items(), key=lambda item: item[0])
+        )
+
+    def unique_legal_actions(self, state: MorpionState) -> tuple[Action, ...]:
+        """Return one canonical representative per legal-action orbit."""
+        return tuple(representative for representative, _ in self._orbit_items(state))
+
+    def canonical_action_in_state(
+        self,
+        state: MorpionState,
+        action: valanga.BranchKey,
+    ) -> Action:
+        """Return the canonical representative for one legal action."""
+        return canonical_action_in_state(state, action)
+
+    def state_rooted_symmetry_stabilizer(
+        self,
+        state: MorpionState,
+    ) -> tuple[int, ...]:
+        """Expose the rooted stabilizer of the current state."""
+        return state_rooted_symmetry_stabilizer(state)
 
     def step(
         self,
@@ -275,7 +390,7 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
             variant=state.variant,
         )
 
-        is_over = not any(self._enumerate_actions(next_state, stop_after_one=True))
+        is_over = not any(self._enumerate_raw_actions(next_state, stop_after_one=True))
         return valanga.Transition(
             next_state=next_state,
             modifications=None,
@@ -317,7 +432,15 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
         """Validate and cast a generic branch key to Morpion ``Action``."""
         return _as_action(action)
 
-    def _enumerate_actions(
+    def _orbit_items(
+        self,
+        state: MorpionState,
+    ) -> tuple[tuple[Action, tuple[Action, ...]], ...]:
+        """Return sorted orbit representatives paired with their raw members."""
+        orbits = self.legal_action_orbits(state)
+        return tuple((orbit[0], orbit) for orbit in orbits)
+
+    def _enumerate_raw_actions(
         self,
         state: MorpionState,
         *,
@@ -352,3 +475,15 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
                     yield (dir_index, x0, y0, missing_i)
                     if stop_after_one:
                         return
+
+    def _enumerate_actions(
+        self,
+        state: MorpionState,
+        *,
+        stop_after_one: bool = False,
+    ) -> Iterable[Action]:
+        """Compatibility alias for the raw legal-action enumerator."""
+        yield from self._enumerate_raw_actions(
+            state,
+            stop_after_one=stop_after_one,
+        )
