@@ -27,6 +27,7 @@ def _state_with_one_horizontal_line(variant: Variant) -> MorpionState:
         points=points,
         used_unit_segments=used_unit_segments,
         dir_usage=dir_usage,
+        played_moves=frozenset({(0, 0, 4, 0)}),
         moves=1,
         variant=variant,
     )
@@ -67,8 +68,40 @@ def test_action_name_roundtrip() -> None:
     assert parsed == action
 
 
-def test_tag_changes_when_dir_usage_changes() -> None:
-    """State tag must include dir_usage because it is rule-relevant state."""
+def test_tag_uses_played_move_identity_when_available() -> None:
+    """Played moves become the structural raw identity when fully populated."""
+    points = frozenset({(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)})
+    segs = frozenset(
+        {
+            _segment((0, 0), (1, 0)),
+            _segment((1, 0), (2, 0)),
+            _segment((2, 0), (3, 0)),
+            _segment((3, 0), (4, 0)),
+        }
+    )
+
+    state_a = MorpionState(
+        points=points,
+        used_unit_segments=segs,
+        dir_usage={((0, 0), 0): 1},
+        played_moves=frozenset({(0, 0, 4, 0)}),
+        moves=1,
+        variant=Variant.TOUCHING_5T,
+    )
+    state_b = MorpionState(
+        points=points,
+        used_unit_segments=segs,
+        dir_usage={((4, 0), 0): 1},
+        played_moves=frozenset({(0, 0, 4, 0)}),
+        moves=1,
+        variant=Variant.TOUCHING_5T,
+    )
+
+    assert state_a.tag == state_b.tag
+
+
+def test_tag_falls_back_to_geometry_for_legacy_states() -> None:
+    """Legacy handcrafted states without played moves keep the older raw tag."""
     points = frozenset({(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)})
     segs = frozenset(
         {

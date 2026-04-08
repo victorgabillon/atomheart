@@ -34,4 +34,6 @@ def test_initial_state_uses_classic_greek_cross() -> None:
     state = initial_state(variant=Variant.TOUCHING_5T)
 
     assert state.points == _expected_classic_points()
+    assert state.played_moves == frozenset()
+    assert state.canonical_tag == ()
     assert state.moves == 0

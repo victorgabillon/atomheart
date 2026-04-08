@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 
 import valanga
 
+from .canonical import Move
 from .state import Dir, MorpionState, Point, Segment, Variant, norm_seg
 
 if TYPE_CHECKING:
@@ -67,6 +68,21 @@ class MorpionActionTypeError(TypeError):
         super().__init__(
             "Morpion actions must be 4-tuples: (dir_index, x0, y0, missing_i)."
         )
+
+
+def _as_action(action: valanga.BranchKey) -> Action:
+    """Validate and cast a generic branch key to Morpion ``Action``."""
+    if not isinstance(action, tuple):
+        raise MorpionActionTypeError
+    action_tuple = cast("tuple[object, ...]", action)
+    if len(action_tuple) != 4:
+        raise MorpionActionTypeError
+
+    normalized = cast("Action", action_tuple)
+    dir_index, _, _, missing_i = normalized
+    if dir_index not in range(4) or missing_i not in range(5):
+        raise MorpionIllegalActionError.action_out_of_range()
+    return normalized
 
 
 class _ListBranchKeyGen(valanga.BranchKeyGeneratorP[valanga.BranchKey]):
@@ -139,6 +155,17 @@ def _unit_segments_on_line(
         norm_seg(pts5[2], pts5[3]),
         norm_seg(pts5[3], pts5[4]),
     )
+
+
+def action_to_played_move(action: valanga.BranchKey) -> Move:
+    """Convert one Morpion action to its played-line endpoint representation."""
+    dir_index, x0, y0, _ = _as_action(action)
+    pts5 = _line_points(x0, y0, DIRECTIONS[dir_index])
+    start = pts5[0]
+    end = pts5[4]
+    if start <= end:
+        return (start[0], start[1], end[0], end[1])
+    return (end[0], end[1], start[0], start[1])
 
 
 def _point_usage_kind(index: int) -> int:
@@ -236,10 +263,14 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
         new_segs = set(state.used_unit_segments)
         new_segs.update(segs)
 
+        next_played_moves = set(state.played_moves)
+        next_played_moves.add(action_to_played_move(action))
+
         next_state = MorpionState(
             points=frozenset(new_points),
             used_unit_segments=frozenset(new_segs),
             dir_usage=_apply_dir_usage(state, dir_index, pts5),
+            played_moves=frozenset(next_played_moves),
             moves=state.moves + 1,
             variant=state.variant,
         )
@@ -284,17 +315,7 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
     @staticmethod
     def _as_action(action: valanga.BranchKey) -> Action:
         """Validate and cast a generic branch key to Morpion ``Action``."""
-        if not isinstance(action, tuple):
-            raise MorpionActionTypeError
-        action_tuple = cast("tuple[object, ...]", action)
-        if len(action_tuple) != 4:
-            raise MorpionActionTypeError
-
-        normalized = cast("Action", action_tuple)
-        dir_index, _, _, missing_i = normalized
-        if dir_index not in range(4) or missing_i not in range(5):
-            raise MorpionIllegalActionError.action_out_of_range()
-        return normalized
+        return _as_action(action)
 
     def _enumerate_actions(
         self,

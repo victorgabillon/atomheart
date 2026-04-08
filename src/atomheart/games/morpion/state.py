@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
 import valanga
+
+from .canonical import Move, canonical_move_set_hash, canonical_move_set_tag
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -81,12 +83,35 @@ class MorpionState(valanga.State):
     points: frozenset[Point]
     used_unit_segments: frozenset[Segment]
     dir_usage: Mapping[tuple[Point, int], int]
+    played_moves: frozenset[Move] = field(default_factory=frozenset)
     moves: int = 0
     variant: Variant = Variant.TOUCHING_5T
 
     @property
     def tag(self) -> int:
-        """Return a stable hash tag suitable for state caching."""
+        """Return a stable raw hash tag for state caching.
+
+        When ``played_moves`` is complete, it becomes the structural state
+        identity. Legacy handcrafted states that omit ``played_moves`` keep the
+        older geometry-based tag as a compatibility fallback.
+        """
+        if len(self.played_moves) == self.moves:
+            return hash((self.variant, tuple(sorted(self.played_moves))))
+        return self._legacy_geometry_tag
+
+    @property
+    def canonical_tag(self) -> tuple[Move, ...]:
+        """Return the rooted D4-invariant move-set tag for the fixed start."""
+        return canonical_move_set_tag(self.played_moves)
+
+    @property
+    def canonical_hash(self) -> int:
+        """Return the hash of :attr:`canonical_tag`."""
+        return canonical_move_set_hash(self.played_moves)
+
+    @property
+    def _legacy_geometry_tag(self) -> int:
+        """Return the pre-refactor geometry-based state hash."""
         return hash(
             (
                 self.variant,
@@ -127,6 +152,7 @@ def initial_state(variant: Variant = Variant.TOUCHING_5T) -> MorpionState:
         points=standard_initial_points_a4(),
         used_unit_segments=frozenset(),
         dir_usage={},
+        played_moves=frozenset(),
         moves=0,
         variant=variant,
     )
