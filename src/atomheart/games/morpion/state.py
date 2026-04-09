@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, cast
 
 import valanga
 
-from .canonical import Move, canonical_move_set_hash, canonical_move_set_tag
+from .canonical import Move, canonical_move_set_tag
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

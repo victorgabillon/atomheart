@@ -59,7 +59,10 @@ def _assert_states_equivalent(left: MorpionState, right: MorpionState) -> None:
     assert right.points == left.points
     assert right.used_unit_segments == left.used_unit_segments
     assert dict(right.dir_usage) == dict(left.dir_usage)
-    assert dynamics.legal_actions(right).get_all() == dynamics.legal_actions(left).get_all()
+    assert (
+        dynamics.legal_actions(right).get_all()
+        == dynamics.legal_actions(left).get_all()
+    )
     assert right.tag == left.tag
 
 
@@ -120,7 +123,10 @@ def test_checkpoint_dump_rejects_state_without_full_move_history() -> None:
     [
         ({"played_moves": []}, "missing 'variant'"),
         ({"variant": "5T"}, "missing 'played_moves'"),
-        ({"variant": "unknown", "played_moves": []}, "Unknown Morpion checkpoint variant"),
+        (
+            {"variant": "unknown", "played_moves": []},
+            "Unknown Morpion checkpoint variant",
+        ),
         (
             {"variant": "5T", "played_moves": [[0, 0, 4]]},
             "four-integer sequence",

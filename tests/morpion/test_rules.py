@@ -100,8 +100,8 @@ def test_tag_uses_played_move_identity_when_available() -> None:
     assert state_a.tag == state_b.tag
 
 
-def test_tag_falls_back_to_geometry_for_legacy_states() -> None:
-    """Legacy handcrafted states without played moves keep the older raw tag."""
+def test_tag_is_canonical_for_legacy_states() -> None:
+    """Legacy handcrafted states now share the same canonical rooted tag."""
     points = frozenset({(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)})
     segs = frozenset(
         {
@@ -127,4 +127,34 @@ def test_tag_falls_back_to_geometry_for_legacy_states() -> None:
         variant=Variant.TOUCHING_5T,
     )
 
-    assert state_a.tag != state_b.tag
+    assert state_a.tag == state_b.tag
+
+
+def test_legacy_geometry_tag_still_distinguishes_handcrafted_states() -> None:
+    """The legacy geometry identity remains available for stricter comparisons."""
+    points = frozenset({(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)})
+    segs = frozenset(
+        {
+            _segment((0, 0), (1, 0)),
+            _segment((1, 0), (2, 0)),
+            _segment((2, 0), (3, 0)),
+            _segment((3, 0), (4, 0)),
+        }
+    )
+
+    state_a = MorpionState(
+        points=points,
+        used_unit_segments=segs,
+        dir_usage={((0, 0), 0): 1},
+        moves=3,
+        variant=Variant.TOUCHING_5T,
+    )
+    state_b = MorpionState(
+        points=points,
+        used_unit_segments=segs,
+        dir_usage={((4, 0), 0): 1},
+        moves=3,
+        variant=Variant.TOUCHING_5T,
+    )
+
+    assert state_a._legacy_geometry_tag != state_b._legacy_geometry_tag
