@@ -9,7 +9,7 @@ description = "Board game environments and Valanga adapters"
 requires-python = ">=3.13"
 dependencies = [
     "rich",
-    "valanga ==0.2.3",
+    "valanga ==0.2.4",
     "PyYAML",
 ]
 
@@ -207,7 +207,7 @@ package = "skip"
 deps = [
   # runtime deps (match [project].dependencies)
   "rich",
-  "valanga==0.2.3",
+  "valanga==0.2.4",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",
@@ -230,7 +230,7 @@ package = "skip"
 deps = [
   # runtime deps
   "rich",
-  "valanga==0.2.3",
+  "valanga==0.2.4",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",

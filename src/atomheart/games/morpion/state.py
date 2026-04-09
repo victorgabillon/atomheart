@@ -94,15 +94,8 @@ class MorpionState(valanga.State):
 
     @property
     def tag(self) -> int:
-        """Return a stable raw hash tag for state caching.
-
-        When ``played_moves`` is complete, it becomes the structural state
-        identity. Legacy handcrafted states that omit ``played_moves`` keep the
-        older geometry-based tag as a compatibility fallback.
-        """
-        if len(self.played_moves) == self.moves:
-            return hash((self.variant, tuple(sorted(self.played_moves))))
-        return self._legacy_geometry_tag
+        """Return the D4-invariant state tag for the fixed start."""
+        return self.canonical_hash
 
     @property
     def canonical_tag(self) -> tuple[Move, ...]:
@@ -111,8 +104,8 @@ class MorpionState(valanga.State):
 
     @property
     def canonical_hash(self) -> int:
-        """Return the hash of :attr:`canonical_tag`."""
-        return canonical_move_set_hash(self.played_moves)
+        """Return the hash of the canonical rooted state identity."""
+        return hash((self.variant, self.canonical_tag))
 
     @property
     def _legacy_geometry_tag(self) -> int:
