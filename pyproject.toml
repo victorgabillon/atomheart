@@ -37,7 +37,7 @@ test = [
 ]
 
 lint = [
-  "ruff>=0.15.1",
+  "ruff>=0.15.10",
   "pylint>=4.0.4",
 ]
 
@@ -53,7 +53,7 @@ dev = [
     "types-PyYAML>=6.0.12.12",
 
     # Linting & formatting
-    "ruff>=0.15.1",
+    "ruff>=0.15.10",
     "pylint>=4.0.4",
     "black>=25.1.0",
 
