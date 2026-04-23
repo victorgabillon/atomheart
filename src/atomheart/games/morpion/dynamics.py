@@ -92,6 +92,25 @@ class MorpionActionReconstructionError(ValueError):
         return cls(f"Could not normalize Morpion action points: {points5!r}")
 
 
+class MorpionPlayedMoveError(ValueError):
+    """Raised when a played-line endpoint move is invalid or not replayable."""
+
+    @classmethod
+    def must_span_four_steps(cls, move: Move) -> MorpionPlayedMoveError:
+        """Create error for moves that do not span four unit steps."""
+        return cls(f"Morpion move must span four unit steps: {move!r}")
+
+    @classmethod
+    def unsupported_direction(cls, move: Move) -> MorpionPlayedMoveError:
+        """Create error for moves with a non-Morpion direction."""
+        return cls(f"Unsupported Morpion move direction: {move!r}")
+
+    @classmethod
+    def not_replayable_in_state(cls, move: Move) -> MorpionPlayedMoveError:
+        """Create error for moves that do not fit the provided state."""
+        return cls(f"Morpion move is not replayable from this state: {move!r}")
+
+
 def _as_action(action: valanga.BranchKey) -> Action:
     """Validate and cast a generic branch key to Morpion ``Action``."""
     if not isinstance(action, tuple):
@@ -189,11 +208,11 @@ def _played_move_points(move: Move) -> tuple[Point, Point, Point, Point, Point]:
     dx = x2 - x1
     dy = y2 - y1
     if dx % 4 != 0 or dy % 4 != 0:
-        raise ValueError(f"Morpion move must span four unit steps: {move!r}")
+        raise MorpionPlayedMoveError.must_span_four_steps(move)
 
     direction = (dx // 4, dy // 4)
     if direction not in DIRECTIONS:
-        raise ValueError(f"Unsupported Morpion move direction: {move!r}")
+        raise MorpionPlayedMoveError.unsupported_direction(move)
 
     return (
         (x1, y1),
@@ -222,7 +241,7 @@ def played_move_to_action(state: MorpionState, move: Move) -> Action:
         index for index, point in enumerate(points) if point not in state.points
     ]
     if len(missing_indexes) != 1:
-        raise ValueError(f"Morpion move is not replayable from this state: {move!r}")
+        raise MorpionPlayedMoveError.not_replayable_in_state(move)
 
     direction = (
         points[1][0] - points[0][0],

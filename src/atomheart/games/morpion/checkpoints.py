@@ -10,82 +10,16 @@ the single move that transforms a concrete parent state into its child.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, TypedDict, cast, runtime_checkable
+from typing import TYPE_CHECKING, TypedDict, cast
 
 import valanga
-
-try:
-    from valanga.checkpoints import StateCheckpointCodec as ValangaStateCheckpointCodec
-except ImportError:
-
-    @runtime_checkable
-    class ValangaStateCheckpointCodec[StateT: valanga.State = valanga.State](Protocol):
-        """Fallback mirror of Valanga's basic checkpoint codec protocol."""
-
-        def dump_state_ref(self, state: StateT) -> object:
-            """Return a checkpoint payload for one state."""
-            ...
-
-        def load_state_ref(self, payload: object) -> StateT:
-            """Rebuild one state from a checkpoint payload."""
-            ...
-
-
-try:
-    from valanga.checkpoints import (
-        IncrementalStateCheckpointCodec as ValangaIncrementalStateCheckpointCodec,
-    )
-    from valanga.checkpoints import (
-        StateCheckpointSummaryCodec as ValangaStateCheckpointSummaryCodec,
-    )
-except ImportError:
-
-    @runtime_checkable
-    class ValangaIncrementalStateCheckpointCodec[
-        StateT: valanga.State = valanga.State
-    ](Protocol):
-        """Fallback mirror of Valanga's incremental checkpoint protocol."""
-
-        def dump_anchor_ref(self, state: StateT) -> object:
-            """Serialize one anchor snapshot reference for ``state``."""
-            ...
-
-        def dump_delta_from_parent(
-            self,
-            *,
-            parent_state: StateT,
-            child_state: StateT,
-            branch_from_parent: valanga.BranchKey | None = None,
-        ) -> object:
-            """Serialize one child delta relative to a concrete parent state."""
-            ...
-
-        def load_anchor_ref(self, anchor_ref: object) -> StateT:
-            """Restore one concrete state from an anchor snapshot reference."""
-            ...
-
-        def load_child_from_delta(
-            self,
-            *,
-            parent_state: StateT,
-            delta_ref: object,
-            branch_from_parent: valanga.BranchKey | None = None,
-        ) -> StateT:
-            """Restore one child state by applying ``delta_ref`` to ``parent_state``."""
-            ...
-
-
-    @runtime_checkable
-    class ValangaStateCheckpointSummaryCodec[
-        StateT: valanga.State = valanga.State
-    ](Protocol):
-        """Fallback mirror of Valanga's summary codec protocol."""
-
-        def dump_state_summary(self, state: StateT) -> object:
-            """Serialize lightweight checkpoint metadata for ``state``."""
-            ...
+from valanga.checkpoints import (
+    CheckpointStateSummary,
+    IncrementalStateCheckpointCodec,
+    StateCheckpointCodec,
+    StateCheckpointSummaryCodec,
+)
 
 from .dynamics import (
     DIRECTIONS,
@@ -120,12 +54,7 @@ class MorpionDeltaPayload(TypedDict):
     move: MorpionMovePayload
 
 
-@dataclass(frozen=True, slots=True)
-class MorpionCheckpointStateSummary:
-    """Small checkpoint summary for Morpion states."""
-
-    tag: int
-    is_terminal: bool
+MorpionCheckpointStateSummary = CheckpointStateSummary
 
 
 class MorpionCheckpointError(ValueError):
@@ -490,9 +419,11 @@ def _child_move_from_parent(
 
 
 class MorpionStateCheckpointCodec(
-    ValangaStateCheckpointCodec[MorpionState],
-    ValangaIncrementalStateCheckpointCodec[MorpionState],
-    ValangaStateCheckpointSummaryCodec[MorpionState],
+    StateCheckpointCodec[MorpionState],
+    IncrementalStateCheckpointCodec[
+        MorpionState, MorpionAnchorPayload, MorpionDeltaPayload, valanga.BranchKey
+    ],
+    StateCheckpointSummaryCodec[MorpionState],
 ):
     """Serialize Morpion states via replay anchors plus one-move deltas.
 
@@ -537,9 +468,9 @@ class MorpionStateCheckpointCodec(
         )
         return {"move": _dump_move(move)}
 
-    def load_anchor_ref(self, anchor_ref: object) -> MorpionState:
+    def load_anchor_ref(self, payload: object) -> MorpionState:
         """Restore one Morpion state from its self-sufficient anchor snapshot."""
-        return _replay_anchor_payload(anchor_ref)
+        return _replay_anchor_payload(payload)
 
     def load_child_from_delta(
         self,

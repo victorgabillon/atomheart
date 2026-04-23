@@ -15,8 +15,8 @@ canonical_move_set_tag_d4 = _canonical.canonical_move_set_tag_d4
 canonical_move_set_tag_d4_translation = _canonical.canonical_move_set_tag_d4_translation
 
 __all__ = [
-    "MorpionDynamics",
     "MorpionCheckpointStateSummary",
+    "MorpionDynamics",
     "MorpionState",
     "MorpionStateCheckpointCodec",
     "Move",
