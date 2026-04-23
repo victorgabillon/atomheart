@@ -3,8 +3,8 @@
 # pylint: disable=duplicate-code
 
 from . import canonical as _canonical
-from .checkpoints import MorpionStateCheckpointCodec
-from .dynamics import MorpionDynamics, action_to_played_move
+from .checkpoints import MorpionCheckpointStateSummary, MorpionStateCheckpointCodec
+from .dynamics import MorpionDynamics, action_to_played_move, played_move_to_action
 from .state import MorpionState, Variant, initial_state
 
 Move = _canonical.Move
@@ -16,6 +16,7 @@ canonical_move_set_tag_d4_translation = _canonical.canonical_move_set_tag_d4_tra
 
 __all__ = [
     "MorpionDynamics",
+    "MorpionCheckpointStateSummary",
     "MorpionState",
     "MorpionStateCheckpointCodec",
     "Move",
@@ -27,4 +28,5 @@ __all__ = [
     "canonical_move_set_tag_d4",
     "canonical_move_set_tag_d4_translation",
     "initial_state",
+    "played_move_to_action",
 ]

@@ -183,6 +183,27 @@ def _unit_segments_on_line(
     )
 
 
+def _played_move_points(move: Move) -> tuple[Point, Point, Point, Point, Point]:
+    """Expand one played-line endpoint move into its five lattice points."""
+    x1, y1, x2, y2 = move
+    dx = x2 - x1
+    dy = y2 - y1
+    if dx % 4 != 0 or dy % 4 != 0:
+        raise ValueError(f"Morpion move must span four unit steps: {move!r}")
+
+    direction = (dx // 4, dy // 4)
+    if direction not in DIRECTIONS:
+        raise ValueError(f"Unsupported Morpion move direction: {move!r}")
+
+    return (
+        (x1, y1),
+        (x1 + direction[0], y1 + direction[1]),
+        (x1 + 2 * direction[0], y1 + 2 * direction[1]),
+        (x1 + 3 * direction[0], y1 + 3 * direction[1]),
+        (x2, y2),
+    )
+
+
 def action_to_played_move(action: valanga.BranchKey) -> Move:
     """Convert one Morpion action to its played-line endpoint representation."""
     dir_index, x0, y0, _ = _as_action(action)
@@ -192,6 +213,27 @@ def action_to_played_move(action: valanga.BranchKey) -> Move:
     if start <= end:
         return (start[0], start[1], end[0], end[1])
     return (end[0], end[1], start[0], start[1])
+
+
+def played_move_to_action(state: MorpionState, move: Move) -> Action:
+    """Convert one played-line endpoint move into the legal action from ``state``."""
+    points = _played_move_points(move)
+    missing_indexes = [
+        index for index, point in enumerate(points) if point not in state.points
+    ]
+    if len(missing_indexes) != 1:
+        raise ValueError(f"Morpion move is not replayable from this state: {move!r}")
+
+    direction = (
+        points[1][0] - points[0][0],
+        points[1][1] - points[0][1],
+    )
+    return (
+        DIRECTIONS.index(direction),
+        points[0][0],
+        points[0][1],
+        missing_indexes[0],
+    )
 
 
 def _points5_to_action(
@@ -330,6 +372,10 @@ class MorpionDynamics(valanga.Dynamics[MorpionState]):
     def unique_legal_actions(self, state: MorpionState) -> tuple[Action, ...]:
         """Return one canonical representative per legal-action orbit."""
         return tuple(representative for representative, _ in self._orbit_items(state))
+
+    def is_terminal_state(self, state: MorpionState) -> bool:
+        """Return whether ``state`` has no legal successor."""
+        return not any(self._enumerate_raw_actions(state, stop_after_one=True))
 
     def canonical_action_in_state(
         self,
