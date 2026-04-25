@@ -8,7 +8,12 @@ from typing import TYPE_CHECKING, cast
 
 import valanga
 
-from .canonical import Move, canonical_move_set_tag
+from .canonical import (
+    Move,
+    canonical_move_set_tag,
+    canonical_state_hash,
+    stable_json_int_hash,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -104,20 +109,23 @@ class MorpionState(valanga.State):
 
     @property
     def canonical_hash(self) -> int:
-        """Return the hash of the canonical rooted state identity."""
-        return hash((self.variant, self.canonical_tag))
+        """Return the stable hash of the canonical rooted state identity."""
+        return canonical_state_hash(
+            variant_value=self.variant.value,
+            canonical_tag=self.canonical_tag,
+        )
 
     @property
     def _legacy_geometry_tag(self) -> int:
-        """Return the pre-refactor geometry-based state hash."""
-        return hash(
-            (
-                self.variant,
-                self.moves,
-                tuple(sorted(self.points)),
-                tuple(sorted(self.used_unit_segments)),
-                tuple(sorted(self.dir_usage.items())),
-            )
+        """Return the stable pre-refactor geometry-based state hash."""
+        return stable_json_int_hash(
+            {
+                "dir_usage": tuple(sorted(self.dir_usage.items())),
+                "moves": self.moves,
+                "points": tuple(sorted(self.points)),
+                "used_unit_segments": tuple(sorted(self.used_unit_segments)),
+                "variant": self.variant.value,
+            }
         )
 
     def is_game_over(self) -> bool:

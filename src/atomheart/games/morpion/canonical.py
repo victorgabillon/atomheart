@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -172,9 +174,34 @@ def canonical_move_set_tag(played_moves: Iterable[Move]) -> tuple[Move, ...]:
     return canonical_move_set_tag_d4(played_moves)
 
 
+def stable_json_int_hash(payload: object) -> int:
+    """Return a deterministic signed integer digest for JSON-shaped payloads."""
+    payload_bytes = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    digest = hashlib.blake2b(payload_bytes, digest_size=8).digest()
+    return int.from_bytes(digest, "big", signed=True)
+
+
+def canonical_state_hash(*, variant_value: str, canonical_tag: tuple[Move, ...]) -> int:
+    """Return the stable hash of one canonical rooted Morpion state identity."""
+    return stable_json_int_hash(
+        {
+            "canonical_tag": canonical_tag,
+            "variant": variant_value,
+        }
+    )
+
+
 def canonical_move_set_hash(played_moves: Iterable[Move]) -> int:
-    """Return the hash of the default canonical move-set tag."""
-    return hash(canonical_move_set_tag(played_moves))
+    """Return the stable hash of the default canonical move-set tag."""
+    return stable_json_int_hash(
+        {
+            "canonical_move_set_tag": canonical_move_set_tag(played_moves),
+        }
+    )
 
 
 __all__ = [
@@ -186,5 +213,7 @@ __all__ = [
     "canonical_move_set_tag",
     "canonical_move_set_tag_d4",
     "canonical_move_set_tag_d4_translation",
+    "canonical_state_hash",
     "rooted_move_set_symmetry_stabilizer",
+    "stable_json_int_hash",
 ]
