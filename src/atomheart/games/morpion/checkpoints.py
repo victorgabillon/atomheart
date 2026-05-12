@@ -11,6 +11,8 @@ the single move that transforms a concrete parent state into its child.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from time import perf_counter
 from typing import TYPE_CHECKING, TypedDict, cast
 
 import valanga
@@ -55,6 +57,18 @@ class MorpionDeltaPayload(TypedDict):
 
 
 MorpionCheckpointStateSummary = CheckpointStateSummary
+
+
+@dataclass(slots=True)
+class MorpionCheckpointCodecProfile:
+    """Aggregate public-method profiling for checkpoint serialization."""
+
+    anchor_calls: int = 0
+    anchor_total_s: float = 0.0
+    delta_calls: int = 0
+    delta_total_s: float = 0.0
+    summary_calls: int = 0
+    summary_total_s: float = 0.0
 
 
 class MorpionCheckpointError(ValueError):
@@ -441,6 +455,11 @@ class MorpionStateCheckpointCodec(
     reversible identity.
     """
 
+    def __init__(self, *, profile_checkpoint: bool = False) -> None:
+        """Initialize optional aggregate profiling for checkpoint dumps."""
+        self.profile_checkpoint = profile_checkpoint
+        self._profile = MorpionCheckpointCodecProfile()
+
     def dump_state_ref(self, state: MorpionState) -> object:
         """Return the legacy state-ref payload as an anchor snapshot alias."""
         return self.dump_anchor_ref(state)
@@ -451,7 +470,14 @@ class MorpionStateCheckpointCodec(
 
     def dump_anchor_ref(self, state: MorpionState) -> MorpionAnchorPayload:
         """Serialize one self-sufficient Morpion anchor snapshot."""
-        return _dump_anchor_payload(state)
+        if not self.profile_checkpoint:
+            return _dump_anchor_payload(state)
+        started_at = perf_counter()
+        try:
+            return _dump_anchor_payload(state)
+        finally:
+            self._profile.anchor_calls += 1
+            self._profile.anchor_total_s += perf_counter() - started_at
 
     def dump_delta_from_parent(
         self,
@@ -461,12 +487,24 @@ class MorpionStateCheckpointCodec(
         branch_from_parent: valanga.BranchKey | None = None,
     ) -> MorpionDeltaPayload:
         """Serialize one concrete Morpion child as a parent-relative delta."""
-        move = _child_move_from_parent(
-            parent_state=parent_state,
-            child_state=child_state,
-            branch_from_parent=branch_from_parent,
-        )
-        return {"move": _dump_move(move)}
+        if not self.profile_checkpoint:
+            move = _child_move_from_parent(
+                parent_state=parent_state,
+                child_state=child_state,
+                branch_from_parent=branch_from_parent,
+            )
+            return {"move": _dump_move(move)}
+        started_at = perf_counter()
+        try:
+            move = _child_move_from_parent(
+                parent_state=parent_state,
+                child_state=child_state,
+                branch_from_parent=branch_from_parent,
+            )
+            return {"move": _dump_move(move)}
+        finally:
+            self._profile.delta_calls += 1
+            self._profile.delta_total_s += perf_counter() - started_at
 
     def load_anchor_ref(self, payload: object) -> MorpionState:
         """Restore one Morpion state from its self-sufficient anchor snapshot."""
@@ -490,10 +528,54 @@ class MorpionStateCheckpointCodec(
 
     def dump_state_summary(self, state: MorpionState) -> MorpionCheckpointStateSummary:
         """Serialize a small stable checkpoint summary for ``state``."""
-        return MorpionCheckpointStateSummary(
-            tag=state.tag,
-            is_terminal=_DYNAMICS.is_terminal_state(state),
-        )
+        if not self.profile_checkpoint:
+            return MorpionCheckpointStateSummary(
+                tag=state.tag,
+                is_terminal=_DYNAMICS.is_terminal_state(state),
+            )
+        started_at = perf_counter()
+        try:
+            return MorpionCheckpointStateSummary(
+                tag=state.tag,
+                is_terminal=_DYNAMICS.is_terminal_state(state),
+            )
+        finally:
+            self._profile.summary_calls += 1
+            self._profile.summary_total_s += perf_counter() - started_at
+
+    def checkpoint_profile_snapshot(self) -> Mapping[str, object]:
+        """Return stable aggregate profiling counters for one checkpoint build."""
+        return {
+            "morpion_anchor_avg_ms": _average_ms(
+                self._profile.anchor_total_s,
+                self._profile.anchor_calls,
+            ),
+            "morpion_anchor_calls": self._profile.anchor_calls,
+            "morpion_anchor_total_s": self._profile.anchor_total_s,
+            "morpion_delta_avg_ms": _average_ms(
+                self._profile.delta_total_s,
+                self._profile.delta_calls,
+            ),
+            "morpion_delta_calls": self._profile.delta_calls,
+            "morpion_delta_total_s": self._profile.delta_total_s,
+            "morpion_summary_avg_ms": _average_ms(
+                self._profile.summary_total_s,
+                self._profile.summary_calls,
+            ),
+            "morpion_summary_calls": self._profile.summary_calls,
+            "morpion_summary_total_s": self._profile.summary_total_s,
+        }
+
+    def reset_checkpoint_profile(self) -> None:
+        """Clear aggregate profiling counters between checkpoint builds."""
+        self._profile = MorpionCheckpointCodecProfile()
+
+
+def _average_ms(total_s: float, count: int) -> float:
+    """Return a stable milliseconds average with zero-safe division."""
+    if count <= 0:
+        return 0.0
+    return 1000.0 * total_s / count
 
 
 __all__ = [

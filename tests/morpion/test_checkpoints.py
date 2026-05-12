@@ -262,3 +262,50 @@ def test_checkpoint_anchor_plus_delta_chain_matches_direct_reconstruction() -> N
         )
 
     _assert_states_equivalent(direct_state, restored_state)
+
+
+def test_checkpoint_codec_profile_snapshot_counts_public_dumps() -> None:
+    """Optional codec profiling should count public checkpoint dump methods."""
+    codec = MorpionStateCheckpointCodec(profile_checkpoint=True)
+    dynamics = MorpionDynamics()
+    parent_state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=4)
+    action = dynamics.legal_actions(parent_state).get_all()[0]
+    child_state = dynamics.step(parent_state, action).next_state
+
+    codec.dump_anchor_ref(parent_state)
+    codec.dump_delta_from_parent(
+        parent_state=parent_state,
+        child_state=child_state,
+        branch_from_parent=action,
+    )
+    codec.dump_state_summary(child_state)
+    snapshot = codec.checkpoint_profile_snapshot()
+
+    assert snapshot["morpion_anchor_calls"] == 1
+    assert snapshot["morpion_delta_calls"] == 1
+    assert snapshot["morpion_summary_calls"] == 1
+    assert snapshot["morpion_anchor_total_s"] >= 0.0
+    assert snapshot["morpion_delta_total_s"] >= 0.0
+    assert snapshot["morpion_summary_total_s"] >= 0.0
+
+
+def test_checkpoint_codec_profile_reset_clears_counts() -> None:
+    """Optional codec profiling should reset between checkpoint builds."""
+    codec = MorpionStateCheckpointCodec(profile_checkpoint=True)
+    codec.dump_anchor_ref(initial_state(Variant.TOUCHING_5T))
+
+    codec.reset_checkpoint_profile()
+    snapshot = codec.checkpoint_profile_snapshot()
+
+    assert snapshot["morpion_anchor_calls"] == 0
+    assert snapshot["morpion_delta_calls"] == 0
+    assert snapshot["morpion_summary_calls"] == 0
+
+
+def test_checkpoint_codec_profile_defaults_to_zero_when_disabled() -> None:
+    """Snapshot access should stay safe even when profiling is disabled."""
+    snapshot = MorpionStateCheckpointCodec().checkpoint_profile_snapshot()
+
+    assert snapshot["morpion_anchor_calls"] == 0
+    assert snapshot["morpion_delta_calls"] == 0
+    assert snapshot["morpion_summary_calls"] == 0
