@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from atomheart.games.morpion import (
-    MorpionCheckpointStateSummary,
     MorpionDynamics,
     MorpionState,
     MorpionStateCheckpointCodec,
@@ -13,6 +12,7 @@ from atomheart.games.morpion import (
     action_to_played_move,
     initial_state,
 )
+from atomheart.games.morpion.checkpoints import _decode_move_code, _encode_move_code
 
 
 def _segment(
@@ -68,6 +68,25 @@ def _assert_states_equivalent(left: MorpionState, right: MorpionState) -> None:
     assert right.tag == left.tag
 
 
+@pytest.mark.parametrize(
+    "move",
+    [
+        (-5, 1, -1, 1),
+        (-2, -5, -2, -1),
+        (0, 0, 4, 0),
+        (1, -4, 5, -4),
+    ],
+)
+def test_checkpoint_move_code_round_trips_representative_moves(
+    move: tuple[int, int, int, int],
+) -> None:
+    """Move codes should reversibly encode signed canonical Morpion moves."""
+    code = _encode_move_code(move)
+
+    assert isinstance(code, int)
+    assert _decode_move_code(code) == move
+
+
 @pytest.mark.parametrize("variant", [Variant.TOUCHING_5T, Variant.DISJOINT_5D])
 def test_checkpoint_codec_anchor_round_trips_initial_state(variant: Variant) -> None:
     """Initial states should anchor round-trip without loss."""
@@ -97,7 +116,8 @@ def test_checkpoint_codec_anchor_round_trips_nontrivial_state(variant: Variant) 
 
     assert isinstance(payload, tuple)
     assert payload[0] == (0 if variant == Variant.TOUCHING_5T else 1)
-    assert sorted(tuple(move) for move in payload[1]) == sorted(
+    assert all(isinstance(move_code, int) for move_code in payload[1])
+    assert sorted(_decode_move_code(move_code) for move_code in payload[1]) == sorted(
         state.played_moves
     )
     _assert_states_equivalent(state, restored)
@@ -126,16 +146,10 @@ def test_checkpoint_dump_anchor_rejects_state_without_full_move_history() -> Non
 @pytest.mark.parametrize(
     ("payload", "message"),
     [
-        ({"played_moves": []}, "missing 'variant'"),
-        ({"variant": "5T"}, "missing 'played_moves'"),
-        (
-            {"variant": "unknown", "played_moves": []},
-            "Unknown Morpion checkpoint variant",
-        ),
-        (
-            {"variant": "5T", "played_moves": [[0, 0, 4]]},
-            "four-integer sequence",
-        ),
+        ({"played_moves": []}, "two-item sequence"),
+        ([0], "two-item sequence"),
+        ([99, []], "variant code"),
+        ([0, [[0, 0, 4, 0]]], "integer move code"),
     ],
 )
 def test_checkpoint_load_anchor_rejects_malformed_payload(
@@ -145,14 +159,14 @@ def test_checkpoint_load_anchor_rejects_malformed_payload(
     """Malformed anchor payloads should raise clear validation errors."""
     codec = MorpionStateCheckpointCodec()
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises((TypeError, ValueError), match=message):
         codec.load_anchor_ref(payload)
 
 
 def test_checkpoint_load_anchor_rejects_illegal_move_sequence() -> None:
     """Well-formed but illegal anchor replay data should fail clearly."""
     codec = MorpionStateCheckpointCodec()
-    payload = {"variant": "5T", "played_moves": [[10, 10, 14, 10]]}
+    payload = [0, [_encode_move_code((10, 10, 14, 10))]]
 
     with pytest.raises(ValueError, match="Illegal Morpion checkpoint move at index 0"):
         codec.load_anchor_ref(payload)
@@ -178,7 +192,8 @@ def test_checkpoint_delta_round_trip_uses_parent_and_one_move(variant: Variant) 
         branch_from_parent=action,
     )
 
-    assert delta_payload == tuple(action_to_played_move(action))
+    assert isinstance(delta_payload, int)
+    assert _decode_move_code(delta_payload) == action_to_played_move(action)
     _assert_states_equivalent(child_state, restored_child)
 
 
@@ -195,7 +210,8 @@ def test_checkpoint_delta_payload_is_move_based_not_whole_state() -> None:
         child_state=child_state,
     )
 
-    assert delta_payload == tuple(action_to_played_move(action))
+    assert isinstance(delta_payload, int)
+    assert _decode_move_code(delta_payload) == action_to_played_move(action)
 
 
 def test_checkpoint_summary_contains_tag_and_terminal_flag() -> None:
@@ -232,13 +248,13 @@ def test_checkpoint_load_anchor_accepts_json_list_compact_form() -> None:
     state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=3)
     payload = codec.dump_anchor_ref(state)
 
-    restored = codec.load_anchor_ref([payload[0], [list(move) for move in payload[1]]])
+    restored = codec.load_anchor_ref([payload[0], list(payload[1])])
 
     _assert_states_equivalent(state, restored)
 
 
-def test_checkpoint_load_delta_accepts_json_list_compact_form() -> None:
-    """Delta loader should accept compact payloads after JSON tuple-to-list decode."""
+def test_checkpoint_load_delta_accepts_compact_integer_form() -> None:
+    """Delta loader should accept compact integer move-code payloads."""
     codec = MorpionStateCheckpointCodec()
     dynamics = MorpionDynamics()
     parent_state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=4)
@@ -252,39 +268,7 @@ def test_checkpoint_load_delta_accepts_json_list_compact_form() -> None:
 
     restored = codec.load_child_from_delta(
         parent_state=parent_state,
-        delta_ref=list(payload),
-        branch_from_parent=action,
-    )
-
-    _assert_states_equivalent(child_state, restored)
-
-
-def test_checkpoint_load_anchor_accepts_legacy_mapping_form() -> None:
-    """Legacy mapping anchors remain readable while compact payloads roll out."""
-    codec = MorpionStateCheckpointCodec()
-    state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=2)
-
-    restored = codec.load_anchor_ref(
-        {
-            "variant": state.variant.value,
-            "played_moves": [list(move) for move in sorted(state.played_moves)],
-        }
-    )
-
-    _assert_states_equivalent(state, restored)
-
-
-def test_checkpoint_load_delta_accepts_legacy_mapping_form() -> None:
-    """Legacy mapping deltas remain readable while compact payloads roll out."""
-    codec = MorpionStateCheckpointCodec()
-    dynamics = MorpionDynamics()
-    parent_state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=4)
-    action = dynamics.legal_actions(parent_state).get_all()[0]
-    child_state = dynamics.step(parent_state, action).next_state
-
-    restored = codec.load_child_from_delta(
-        parent_state=parent_state,
-        delta_ref={"move": list(action_to_played_move(action))},
+        delta_ref=payload,
         branch_from_parent=action,
     )
 
@@ -296,7 +280,7 @@ def test_checkpoint_load_delta_accepts_legacy_mapping_form() -> None:
     [
         ([0], "two-item sequence"),
         ([99, []], "variant code"),
-        ((1, [[0, 0, 4]]), "four-integer sequence"),
+        ((1, [[0, 0, 4, 0]]), "integer move code"),
     ],
 )
 def test_checkpoint_load_anchor_rejects_invalid_compact_shapes(
@@ -310,14 +294,25 @@ def test_checkpoint_load_anchor_rejects_invalid_compact_shapes(
         codec.load_anchor_ref(anchor_payload)
 
 
-def test_checkpoint_load_delta_rejects_invalid_compact_shape() -> None:
+def test_checkpoint_load_delta_rejects_invalid_move_code_shape() -> None:
     """Compact delta payload shape errors should stay clear and specific."""
     codec = MorpionStateCheckpointCodec()
 
-    with pytest.raises((TypeError, ValueError), match="four-integer sequence"):
+    with pytest.raises((TypeError, ValueError), match="integer move code"):
         codec.load_child_from_delta(
             parent_state=_state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=1),
-            delta_ref={"move": [0, 0, 4]},
+            delta_ref=[0, 0, 4, 0],
+        )
+
+
+def test_checkpoint_load_delta_rejects_invalid_move_code_value() -> None:
+    """Invalid move-code integers should fail before replay."""
+    codec = MorpionStateCheckpointCodec()
+
+    with pytest.raises(ValueError, match="Invalid Morpion checkpoint move code"):
+        codec.load_child_from_delta(
+            parent_state=_state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=1),
+            delta_ref=-1,
         )
 
 
