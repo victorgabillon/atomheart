@@ -77,7 +77,10 @@ def test_checkpoint_codec_anchor_round_trips_initial_state(variant: Variant) -> 
     payload = codec.dump_anchor_ref(state)
     restored = codec.load_anchor_ref(payload)
 
-    assert payload == {"variant": variant.value, "played_moves": []}
+    assert payload == (
+        0 if variant == Variant.TOUCHING_5T else 1,
+        (),
+    )
     _assert_states_equivalent(state, restored)
     assert codec.dump_state_ref(state) == payload
     _assert_states_equivalent(state, codec.load_state_ref(payload))
@@ -92,9 +95,9 @@ def test_checkpoint_codec_anchor_round_trips_nontrivial_state(variant: Variant) 
     payload = codec.dump_anchor_ref(state)
     restored = codec.load_anchor_ref(payload)
 
-    assert isinstance(payload, dict)
-    assert payload["variant"] == variant.value
-    assert sorted(tuple(move) for move in payload["played_moves"]) == sorted(
+    assert isinstance(payload, tuple)
+    assert payload[0] == (0 if variant == Variant.TOUCHING_5T else 1)
+    assert sorted(tuple(move) for move in payload[1]) == sorted(
         state.played_moves
     )
     _assert_states_equivalent(state, restored)
@@ -107,11 +110,9 @@ def test_checkpoint_anchor_payload_uses_reversible_variant_and_moves_not_tag() -
 
     payload = codec.dump_anchor_ref(state)
 
-    assert "variant" in payload
-    assert "played_moves" in payload
-    assert "tag" not in payload
-    assert payload["variant"] == state.variant.value
-    assert payload["played_moves"]
+    assert isinstance(payload, tuple)
+    assert payload[0] == (0 if state.variant == Variant.TOUCHING_5T else 1)
+    assert payload[1]
 
 
 def test_checkpoint_dump_anchor_rejects_state_without_full_move_history() -> None:
@@ -177,7 +178,7 @@ def test_checkpoint_delta_round_trip_uses_parent_and_one_move(variant: Variant) 
         branch_from_parent=action,
     )
 
-    assert delta_payload == {"move": list(action_to_played_move(action))}
+    assert delta_payload == tuple(action_to_played_move(action))
     _assert_states_equivalent(child_state, restored_child)
 
 
@@ -194,10 +195,7 @@ def test_checkpoint_delta_payload_is_move_based_not_whole_state() -> None:
         child_state=child_state,
     )
 
-    assert set(delta_payload) == {"move"}
-    assert delta_payload["move"] == list(action_to_played_move(action))
-    assert "variant" not in delta_payload
-    assert "played_moves" not in delta_payload
+    assert delta_payload == tuple(action_to_played_move(action))
 
 
 def test_checkpoint_summary_contains_tag_and_terminal_flag() -> None:
@@ -208,9 +206,7 @@ def test_checkpoint_summary_contains_tag_and_terminal_flag() -> None:
 
     summary = codec.dump_state_summary(state)
 
-    assert isinstance(summary, MorpionCheckpointStateSummary)
-    assert summary.tag == state.tag
-    assert summary.is_terminal is dynamics.is_terminal_state(state)
+    assert summary == (state.tag, dynamics.is_terminal_state(state))
 
 
 def test_checkpoint_summary_marks_terminal_state() -> None:
@@ -227,7 +223,102 @@ def test_checkpoint_summary_marks_terminal_state() -> None:
 
     summary = codec.dump_state_summary(state)
 
-    assert summary == MorpionCheckpointStateSummary(tag=state.tag, is_terminal=True)
+    assert summary == (state.tag, True)
+
+
+def test_checkpoint_load_anchor_accepts_json_list_compact_form() -> None:
+    """Anchor loader should accept compact payloads after JSON tuple-to-list decode."""
+    codec = MorpionStateCheckpointCodec()
+    state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=3)
+    payload = codec.dump_anchor_ref(state)
+
+    restored = codec.load_anchor_ref([payload[0], [list(move) for move in payload[1]]])
+
+    _assert_states_equivalent(state, restored)
+
+
+def test_checkpoint_load_delta_accepts_json_list_compact_form() -> None:
+    """Delta loader should accept compact payloads after JSON tuple-to-list decode."""
+    codec = MorpionStateCheckpointCodec()
+    dynamics = MorpionDynamics()
+    parent_state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=4)
+    action = dynamics.legal_actions(parent_state).get_all()[0]
+    child_state = dynamics.step(parent_state, action).next_state
+    payload = codec.dump_delta_from_parent(
+        parent_state=parent_state,
+        child_state=child_state,
+        branch_from_parent=action,
+    )
+
+    restored = codec.load_child_from_delta(
+        parent_state=parent_state,
+        delta_ref=list(payload),
+        branch_from_parent=action,
+    )
+
+    _assert_states_equivalent(child_state, restored)
+
+
+def test_checkpoint_load_anchor_accepts_legacy_mapping_form() -> None:
+    """Legacy mapping anchors remain readable while compact payloads roll out."""
+    codec = MorpionStateCheckpointCodec()
+    state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=2)
+
+    restored = codec.load_anchor_ref(
+        {
+            "variant": state.variant.value,
+            "played_moves": [list(move) for move in sorted(state.played_moves)],
+        }
+    )
+
+    _assert_states_equivalent(state, restored)
+
+
+def test_checkpoint_load_delta_accepts_legacy_mapping_form() -> None:
+    """Legacy mapping deltas remain readable while compact payloads roll out."""
+    codec = MorpionStateCheckpointCodec()
+    dynamics = MorpionDynamics()
+    parent_state = _state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=4)
+    action = dynamics.legal_actions(parent_state).get_all()[0]
+    child_state = dynamics.step(parent_state, action).next_state
+
+    restored = codec.load_child_from_delta(
+        parent_state=parent_state,
+        delta_ref={"move": list(action_to_played_move(action))},
+        branch_from_parent=action,
+    )
+
+    _assert_states_equivalent(child_state, restored)
+
+
+@pytest.mark.parametrize(
+    ("anchor_payload", "anchor_message"),
+    [
+        ([0], "two-item sequence"),
+        ([99, []], "variant code"),
+        ((1, [[0, 0, 4]]), "four-integer sequence"),
+    ],
+)
+def test_checkpoint_load_anchor_rejects_invalid_compact_shapes(
+    anchor_payload: object,
+    anchor_message: str,
+) -> None:
+    """Compact anchor payload shape errors should stay clear and specific."""
+    codec = MorpionStateCheckpointCodec()
+
+    with pytest.raises((TypeError, ValueError), match=anchor_message):
+        codec.load_anchor_ref(anchor_payload)
+
+
+def test_checkpoint_load_delta_rejects_invalid_compact_shape() -> None:
+    """Compact delta payload shape errors should stay clear and specific."""
+    codec = MorpionStateCheckpointCodec()
+
+    with pytest.raises((TypeError, ValueError), match="four-integer sequence"):
+        codec.load_child_from_delta(
+            parent_state=_state_after_n_moves(Variant.TOUCHING_5T, moves_to_play=1),
+            delta_ref={"move": [0, 0, 4]},
+        )
 
 
 def test_checkpoint_anchor_plus_delta_chain_matches_direct_reconstruction() -> None:

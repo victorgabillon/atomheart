@@ -63,7 +63,7 @@ class LegacyMorpionDeltaPayload(TypedDict):
 
 type MorpionAnchorPayload = CompactMorpionAnchorPayload | LegacyMorpionAnchorPayload
 type MorpionDeltaPayload = CompactMorpionDeltaPayload | LegacyMorpionDeltaPayload
-type MorpionCheckpointStateSummary = tuple[int, bool]
+type MorpionCheckpointStateSummary = tuple[valanga.StateTag, bool]
 
 _VARIANT_TO_COMPACT_CODE: dict[Variant, CompactMorpionVariantCode] = {
     Variant.TOUCHING_5T: 0,
