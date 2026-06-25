@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from time import perf_counter
-from typing import TYPE_CHECKING, TypedDict, cast
+from typing import TYPE_CHECKING, Literal, TypedDict, cast
 
 import valanga
 from valanga.checkpoints import (
@@ -35,10 +35,15 @@ if TYPE_CHECKING:
     from .canonical import Move
     from .state import Point
 
-type MorpionMovePayload = list[int]
+type CompactMorpionMovePayload = tuple[int, int, int, int]
+type CompactMorpionVariantCode = Literal[0, 1]
+type CompactMorpionAnchorPayload = tuple[
+    CompactMorpionVariantCode, tuple[CompactMorpionMovePayload, ...]
+]
+type CompactMorpionDeltaPayload = CompactMorpionMovePayload
 
 
-class MorpionAnchorPayload(TypedDict):
+class LegacyMorpionAnchorPayload(TypedDict):
     """Self-sufficient Morpion anchor payload.
 
     The first incremental implementation keeps anchors as ordered move history.
@@ -47,16 +52,27 @@ class MorpionAnchorPayload(TypedDict):
     """
 
     variant: str
-    played_moves: list[MorpionMovePayload]
+    played_moves: list[list[int]]
 
 
-class MorpionDeltaPayload(TypedDict):
+class LegacyMorpionDeltaPayload(TypedDict):
     """Parent-relative Morpion delta payload."""
 
-    move: MorpionMovePayload
+    move: list[int]
 
 
-MorpionCheckpointStateSummary = CheckpointStateSummary
+type MorpionAnchorPayload = CompactMorpionAnchorPayload | LegacyMorpionAnchorPayload
+type MorpionDeltaPayload = CompactMorpionDeltaPayload | LegacyMorpionDeltaPayload
+type MorpionCheckpointStateSummary = tuple[int, bool]
+
+_VARIANT_TO_COMPACT_CODE: dict[Variant, CompactMorpionVariantCode] = {
+    Variant.TOUCHING_5T: 0,
+    Variant.DISJOINT_5D: 1,
+}
+_COMPACT_CODE_TO_VARIANT: dict[CompactMorpionVariantCode, Variant] = {
+    compact_code: variant
+    for variant, compact_code in _VARIANT_TO_COMPACT_CODE.items()
+}
 
 
 @dataclass(slots=True)
@@ -131,6 +147,11 @@ class MorpionCheckpointError(ValueError):
         return cls(f"Unknown Morpion checkpoint variant: {raw_variant!r}")
 
     @classmethod
+    def unknown_variant_code(cls, raw_variant_code: int) -> MorpionCheckpointError:
+        """Return the unknown compact-variant-code error."""
+        return cls(f"Unknown Morpion checkpoint variant code: {raw_variant_code!r}")
+
+    @classmethod
     def missing_played_moves(cls) -> MorpionCheckpointError:
         """Return the missing move-sequence error."""
         return cls("Morpion checkpoint payload is missing 'played_moves'.")
@@ -200,6 +221,21 @@ class MorpionCheckpointTypeError(TypeError):
         )
 
     @classmethod
+    def compact_anchor_payload_must_be_pair(cls) -> MorpionCheckpointTypeError:
+        """Return the compact anchor tuple/list-shape error."""
+        return cls(
+            "Morpion compact anchor payload must be a two-item sequence: "
+            "(variant_code, played_moves)."
+        )
+
+    @classmethod
+    def variant_code_must_be_integer(cls) -> MorpionCheckpointTypeError:
+        """Return the compact variant-code type error."""
+        return cls(
+            "Morpion compact anchor payload variant code must be an integer."
+        )
+
+    @classmethod
     def transition_must_expose_next_state(cls) -> MorpionCheckpointTypeError:
         """Return the transition-shape error."""
         return cls("Morpion dynamics transition must expose a MorpionState next_state.")
@@ -249,9 +285,9 @@ def _move_points(move: Move) -> tuple[Point, Point, Point, Point, Point]:
     )
 
 
-def _dump_move(move: Move) -> MorpionMovePayload:
+def _dump_move(move: Move) -> CompactMorpionMovePayload:
     """Serialize one Morpion move into a JSON-friendly payload."""
-    return [move[0], move[1], move[2], move[3]]
+    return (move[0], move[1], move[2], move[3])
 
 
 def _load_move(payload: object, *, index: int) -> Move:
@@ -327,6 +363,35 @@ def _payload_mapping(payload: object) -> dict[str, object]:
     return data
 
 
+def _payload_variant_and_moves(
+    payload: object,
+) -> tuple[Variant, list[object]]:
+    """Extract Morpion anchor payload data from compact or legacy forms."""
+    if isinstance(payload, Mapping):
+        data = _payload_mapping(payload)
+        return _payload_variant(data), _payload_played_moves(data)
+    if not isinstance(payload, Sequence) or isinstance(
+        payload, str | bytes | bytearray
+    ):
+        raise MorpionCheckpointTypeError.payload_must_be_mapping()
+    values = list(cast("Sequence[object]", payload))
+    if len(values) != 2:
+        raise MorpionCheckpointTypeError.compact_anchor_payload_must_be_pair()
+    raw_variant_code = values[0]
+    if not _is_int(raw_variant_code):
+        raise MorpionCheckpointTypeError.variant_code_must_be_integer()
+    try:
+        variant = _COMPACT_CODE_TO_VARIANT[cast("CompactMorpionVariantCode", raw_variant_code)]
+    except KeyError as exc:
+        raise MorpionCheckpointError.unknown_variant_code(cast("int", raw_variant_code)) from exc
+    raw_moves = values[1]
+    if not isinstance(raw_moves, Sequence) or isinstance(
+        raw_moves, str | bytes | bytearray
+    ):
+        raise MorpionCheckpointTypeError.played_moves_must_be_sequence()
+    return variant, list(cast("Sequence[object]", raw_moves))
+
+
 def _payload_variant(data: Mapping[str, object]) -> Variant:
     """Extract and validate the Morpion variant from one payload."""
     if "variant" not in data:
@@ -363,19 +428,24 @@ def _payload_delta_move(data: Mapping[str, object]) -> object:
     return data["move"]
 
 
-def _dump_anchor_payload(state: MorpionState) -> MorpionAnchorPayload:
+def _payload_delta_move_any(payload: object) -> object:
+    """Extract Morpion delta payload data from compact or legacy forms."""
+    if isinstance(payload, Mapping):
+        return _payload_delta_move(_payload_mapping(payload))
+    return payload
+
+
+def _dump_anchor_payload(state: MorpionState) -> CompactMorpionAnchorPayload:
     """Serialize one Morpion state as a self-sufficient anchor snapshot."""
-    return {
-        "variant": state.variant.value,
-        "played_moves": [_dump_move(move) for move in _ordered_played_moves(state)],
-    }
+    return (
+        _VARIANT_TO_COMPACT_CODE[state.variant],
+        tuple(_dump_move(move) for move in _ordered_played_moves(state)),
+    )
 
 
 def _replay_anchor_payload(payload: object) -> MorpionState:
     """Restore one concrete Morpion state from an anchor payload."""
-    data = _payload_mapping(payload)
-    variant = _payload_variant(data)
-    serialized_moves = _payload_played_moves(data)
+    variant, serialized_moves = _payload_variant_and_moves(payload)
 
     state: MorpionState = initial_state(variant)
     for index, serialized_move in enumerate(serialized_moves):
@@ -485,7 +555,7 @@ class MorpionStateCheckpointCodec(
         parent_state: MorpionState,
         child_state: MorpionState,
         branch_from_parent: valanga.BranchKey | None = None,
-    ) -> MorpionDeltaPayload:
+    ) -> CompactMorpionDeltaPayload:
         """Serialize one concrete Morpion child as a parent-relative delta."""
         if not self.profile_checkpoint:
             move = _child_move_from_parent(
@@ -493,7 +563,7 @@ class MorpionStateCheckpointCodec(
                 child_state=child_state,
                 branch_from_parent=branch_from_parent,
             )
-            return {"move": _dump_move(move)}
+            return _dump_move(move)
         started_at = perf_counter()
         try:
             move = _child_move_from_parent(
@@ -501,7 +571,7 @@ class MorpionStateCheckpointCodec(
                 child_state=child_state,
                 branch_from_parent=branch_from_parent,
             )
-            return {"move": _dump_move(move)}
+            return _dump_move(move)
         finally:
             self._profile.delta_calls += 1
             self._profile.delta_total_s += perf_counter() - started_at
@@ -518,8 +588,7 @@ class MorpionStateCheckpointCodec(
         branch_from_parent: valanga.BranchKey | None = None,
     ) -> MorpionState:
         """Restore one Morpion child by applying a serialized move to its parent."""
-        data = _payload_mapping(delta_ref)
-        move = _load_move(_payload_delta_move(data), index=0)
+        move = _load_move(_payload_delta_move_any(delta_ref), index=0)
         _validate_branch_matches_move(
             move=move,
             branch_from_parent=branch_from_parent,
@@ -529,19 +598,26 @@ class MorpionStateCheckpointCodec(
     def dump_state_summary(self, state: MorpionState) -> MorpionCheckpointStateSummary:
         """Serialize a small stable checkpoint summary for ``state``."""
         if not self.profile_checkpoint:
-            return MorpionCheckpointStateSummary(
-                tag=state.tag,
-                is_terminal=_DYNAMICS.is_terminal_state(state),
-            )
+            return (state.tag, _DYNAMICS.is_terminal_state(state))
         started_at = perf_counter()
         try:
-            return MorpionCheckpointStateSummary(
-                tag=state.tag,
-                is_terminal=_DYNAMICS.is_terminal_state(state),
-            )
+            return (state.tag, _DYNAMICS.is_terminal_state(state))
         finally:
             self._profile.summary_calls += 1
             self._profile.summary_total_s += perf_counter() - started_at
+
+    def dump_state_parent_branch_for_checkpoint(
+        self,
+        branch_from_parent: valanga.BranchKey | None,
+    ) -> object | None:
+        """Return compact parent-branch payload metadata for checkpoint deltas.
+
+        Morpion delta payloads already encode the canonical move needed to rebuild
+        the child state from the concrete parent state, so duplicating the branch
+        payload here is unnecessary for this domain codec.
+        """
+        del branch_from_parent
+        return None
 
     def checkpoint_profile_snapshot(self) -> Mapping[str, object]:
         """Return stable aggregate profiling counters for one checkpoint build."""
