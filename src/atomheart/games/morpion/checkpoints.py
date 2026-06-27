@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import valanga
 from valanga.checkpoints import (
+    CheckpointStateSummary,
     IncrementalStateCheckpointCodec,
     StateCheckpointCodec,
     StateCheckpointSummaryCodec,
@@ -42,15 +43,14 @@ type CompactMorpionAnchorPayload = tuple[
 type CompactMorpionDeltaPayload = CompactMorpionMoveCode
 type MorpionAnchorPayload = CompactMorpionAnchorPayload
 type MorpionDeltaPayload = CompactMorpionDeltaPayload
-type MorpionCheckpointStateSummary = tuple[valanga.StateTag, bool]
+type MorpionCheckpointStateSummary = CheckpointStateSummary
 
 _VARIANT_TO_COMPACT_CODE: dict[Variant, CompactMorpionVariantCode] = {
     Variant.TOUCHING_5T: 0,
     Variant.DISJOINT_5D: 1,
 }
 _COMPACT_CODE_TO_VARIANT: dict[CompactMorpionVariantCode, Variant] = {
-    compact_code: variant
-    for variant, compact_code in _VARIANT_TO_COMPACT_CODE.items()
+    compact_code: variant for variant, compact_code in _VARIANT_TO_COMPACT_CODE.items()
 }
 _MOVE_CODE_COORD_BITS = 16
 _MOVE_CODE_COORD_MASK = (1 << _MOVE_CODE_COORD_BITS) - 1
@@ -191,9 +191,7 @@ class MorpionCheckpointTypeError(TypeError):
     @classmethod
     def variant_code_must_be_integer(cls) -> MorpionCheckpointTypeError:
         """Return the compact variant-code type error."""
-        return cls(
-            "Morpion compact anchor payload variant code must be an integer."
-        )
+        return cls("Morpion compact anchor payload variant code must be an integer.")
 
     @classmethod
     def transition_must_expose_next_state(cls) -> MorpionCheckpointTypeError:
@@ -258,6 +256,10 @@ def _encode_move_code(move: Move) -> int:
     codec validates the generous signed-16-bit envelope instead of relying on a
     fragile current-profile board size.
     """
+    # Runtime checkpoint moves are already canonical because dynamics records
+    # ``action_to_played_move`` output, but normalize here for handcrafted states.
+    x1, y1, x2, y2 = move
+    move = (x1, y1, x2, y2) if (x1, y1) <= (x2, y2) else (x2, y2, x1, y1)
     _move_points(move)
     x1, y1, x2, y2 = move
     lanes = (
@@ -350,9 +352,13 @@ def _payload_variant_and_moves(
     if not _is_int(raw_variant_code):
         raise MorpionCheckpointTypeError.variant_code_must_be_integer()
     try:
-        variant = _COMPACT_CODE_TO_VARIANT[cast("CompactMorpionVariantCode", raw_variant_code)]
+        variant = _COMPACT_CODE_TO_VARIANT[
+            cast("CompactMorpionVariantCode", raw_variant_code)
+        ]
     except KeyError as exc:
-        raise MorpionCheckpointError.unknown_variant_code(cast("int", raw_variant_code)) from exc
+        raise MorpionCheckpointError.unknown_variant_code(
+            cast("int", raw_variant_code)
+        ) from exc
     raw_moves = values[1]
     if not isinstance(raw_moves, Sequence) or isinstance(
         raw_moves, str | bytes | bytearray
@@ -524,10 +530,16 @@ class MorpionStateCheckpointCodec(
     def dump_state_summary(self, state: MorpionState) -> MorpionCheckpointStateSummary:
         """Serialize a small stable checkpoint summary for ``state``."""
         if not self.profile_checkpoint:
-            return (state.tag, _DYNAMICS.is_terminal_state(state))
+            return CheckpointStateSummary(
+                tag=state.tag,
+                is_terminal=_DYNAMICS.is_terminal_state(state),
+            )
         started_at = perf_counter()
         try:
-            return (state.tag, _DYNAMICS.is_terminal_state(state))
+            return CheckpointStateSummary(
+                tag=state.tag,
+                is_terminal=_DYNAMICS.is_terminal_state(state),
+            )
         finally:
             self._profile.summary_calls += 1
             self._profile.summary_total_s += perf_counter() - started_at
@@ -543,7 +555,8 @@ class MorpionStateCheckpointCodec(
         payload here is unnecessary for this domain codec.
         """
         del branch_from_parent
-        return None
+        empty_payload: object | None = None
+        return empty_payload
 
     def checkpoint_profile_snapshot(self) -> Mapping[str, object]:
         """Return stable aggregate profiling counters for one checkpoint build."""

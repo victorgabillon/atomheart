@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from valanga.checkpoints import CheckpointStateSummary
 
 from atomheart.games.morpion import (
     MorpionDynamics,
@@ -12,7 +13,11 @@ from atomheart.games.morpion import (
     action_to_played_move,
     initial_state,
 )
-from atomheart.games.morpion.checkpoints import _decode_move_code, _encode_move_code
+from atomheart.games.morpion.checkpoints import (
+    MorpionCheckpointError,
+    _decode_move_code,
+    _encode_move_code,
+)
 
 
 def _segment(
@@ -85,6 +90,31 @@ def test_checkpoint_move_code_round_trips_representative_moves(
 
     assert isinstance(code, int)
     assert _decode_move_code(code) == move
+
+
+def test_checkpoint_move_code_canonicalizes_reversed_endpoints() -> None:
+    """Move-code encoding should tolerate reversed endpoint order."""
+    code = _encode_move_code((4, 0, 0, 0))
+
+    assert _decode_move_code(code) == (0, 0, 4, 0)
+
+
+def test_checkpoint_move_code_accepts_coordinate_envelope_edges() -> None:
+    """Move-code encoding should accept the signed 16-bit coordinate envelope."""
+    min_edge_code = _encode_move_code((-32768, 0, -32764, 0))
+    max_edge_code = _encode_move_code((32763, 0, 32767, 0))
+
+    assert _decode_move_code(min_edge_code) == (-32768, 0, -32764, 0)
+    assert _decode_move_code(max_edge_code) == (32763, 0, 32767, 0)
+
+
+def test_checkpoint_move_code_rejects_coordinate_outside_envelope() -> None:
+    """Move-code encoding should fail clearly outside the coordinate envelope."""
+    with pytest.raises(
+        MorpionCheckpointError,
+        match="coordinates must fit signed 16-bit",
+    ):
+        _encode_move_code((32764, 0, 32768, 0))
 
 
 @pytest.mark.parametrize("variant", [Variant.TOUCHING_5T, Variant.DISJOINT_5D])
@@ -222,7 +252,10 @@ def test_checkpoint_summary_contains_tag_and_terminal_flag() -> None:
 
     summary = codec.dump_state_summary(state)
 
-    assert summary == (state.tag, dynamics.is_terminal_state(state))
+    assert summary == CheckpointStateSummary(
+        tag=state.tag,
+        is_terminal=dynamics.is_terminal_state(state),
+    )
 
 
 def test_checkpoint_summary_marks_terminal_state() -> None:
@@ -239,7 +272,7 @@ def test_checkpoint_summary_marks_terminal_state() -> None:
 
     summary = codec.dump_state_summary(state)
 
-    assert summary == (state.tag, True)
+    assert summary == CheckpointStateSummary(tag=state.tag, is_terminal=True)
 
 
 def test_checkpoint_load_anchor_accepts_json_list_compact_form() -> None:
