@@ -24,7 +24,7 @@ chess = [
 
 # Adds the optional Rust-backed chess board implementation on top of ``chess``.
 chess-rust = [
-    "chess",
+    "chess>=1.11.2",
     "shakmaty_python_binding>=0.1.5",
 ]
 
