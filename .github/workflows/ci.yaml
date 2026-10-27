@@ -30,7 +30,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: victorgabillon/valanga
-        ref: a8701872db779af5e334dc981d977c22323a820b
+        ref: 2685ed9e79236ad707e2657f87f0ddc53953e4c7
         path: .ci-valanga
 
     - name: Build the Python 3.14 Valanga wheel
