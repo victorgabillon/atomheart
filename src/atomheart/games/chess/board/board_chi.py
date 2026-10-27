@@ -103,7 +103,7 @@ class LegalMoveKeyGenerator(LegalMoveKeyGeneratorP):
 
     def copy(
         self, copied_chess_board: chess.Board | None = None
-    ) -> "LegalMoveKeyGenerator":
+    ) -> LegalMoveKeyGenerator:
         """Create a copy of the LegalMoveKeyGenerator.
 
         Args:
@@ -754,7 +754,7 @@ class BoardChi(IBoard):
         """
         return self.chess_board.has_kingside_castling_rights(color)
 
-    def copy(self, stack: bool, deep_copy_legal_moves: bool = True) -> "BoardChi":
+    def copy(self, stack: bool, deep_copy_legal_moves: bool = True) -> BoardChi:
         """Create a copy of the current board.
 
         Args:

@@ -1,10 +1,6 @@
 """Legal move generation for checkers."""
 # pylint: disable=duplicate-code
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 import valanga
 
 from .bitboard import bit, iter_bits
@@ -16,11 +12,9 @@ from .geometry import (
     STEP_TABLES,
     WHITE_FORWARD_DIRECTIONS,
 )
-
-if TYPE_CHECKING:
-    from .move import MoveKey
-    from .rules import CheckersRules
-    from .state import CheckersState
+from .move import MoveKey
+from .rules import CheckersRules
+from .state import CheckersState
 
 
 def generate_legal_moves(state: CheckersState, rules: CheckersRules) -> list[MoveKey]:

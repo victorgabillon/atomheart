@@ -1,10 +1,9 @@
 """Valanga dynamics adapter for Morpion Solitaire (5T / 5D)."""
 
-from __future__ import annotations
-
 from collections import defaultdict
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import valanga
 
@@ -14,9 +13,6 @@ from .canonical import (
     rooted_move_set_symmetry_stabilizer,
 )
 from .state import Dir, MorpionState, Point, Segment, Variant, norm_seg
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Sequence
 
 DIRECTIONS: tuple[Dir, ...] = (
     (1, 0),

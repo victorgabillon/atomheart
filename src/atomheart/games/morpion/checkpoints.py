@@ -8,12 +8,10 @@ parent-based delta path is kept separate and efficient: one child delta is just
 the single move that transforms a concrete parent state into its child.
 """
 
-from __future__ import annotations
-
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from time import perf_counter
-from typing import TYPE_CHECKING, Literal, cast
+from typing import Literal, cast
 
 import valanga
 from valanga.checkpoints import (
@@ -23,17 +21,14 @@ from valanga.checkpoints import (
     StateCheckpointSummaryCodec,
 )
 
+from .canonical import Move
 from .dynamics import (
     DIRECTIONS,
     MorpionDynamics,
     action_to_played_move,
     played_move_to_action,
 )
-from .state import MorpionState, Variant, initial_state
-
-if TYPE_CHECKING:
-    from .canonical import Move
-    from .state import Point
+from .state import MorpionState, Point, Variant, initial_state
 
 type CompactMorpionMoveCode = int
 type CompactMorpionVariantCode = Literal[0, 1]

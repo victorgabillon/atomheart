@@ -1,7 +1,5 @@
 """Valanga Dynamics adapter for checkers."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import cast
 

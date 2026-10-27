@@ -13,10 +13,23 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           cache: pip
 
-      - run: python -m pip install -U pip tox
+      - run: python -m pip install -U pip tox==4.56.1
+      - name: Check out the validated Valanga source
+        uses: actions/checkout@v4
+        with:
+          repository: victorgabillon/valanga
+          ref: a8701872db779af5e334dc981d977c22323a820b
+          path: .ci-valanga
+
+      - name: Build the Python 3.14 Valanga wheel
+        run: |
+          python -m pip install build==1.6.1
+          python -m build --wheel --outdir "$RUNNER_TEMP/valanga-dist" .ci-valanga
+          echo "VALANGA_WHEEL=$RUNNER_TEMP/valanga-dist/valanga-0.2.5-py3-none-any.whl" >> "$GITHUB_ENV"
+
       - run: tox -q
 
   publish:
@@ -35,7 +48,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Build
         run: |

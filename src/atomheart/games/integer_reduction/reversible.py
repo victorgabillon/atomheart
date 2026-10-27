@@ -1,16 +1,11 @@
 """Reversible dynamics for the integer reduction game."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import valanga
 
+from .dynamics import IntegerReductionAction, IntegerReductionDynamics
 from .state import IntegerReductionState
-
-if TYPE_CHECKING:
-    from .dynamics import IntegerReductionAction, IntegerReductionDynamics
 
 
 @dataclass(frozen=True, slots=True)

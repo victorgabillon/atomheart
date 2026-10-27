@@ -1,16 +1,11 @@
 """Reversible dynamics for the Nim game."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import valanga
 
+from .dynamics import NimAction, NimDynamics
 from .state import NimState
-
-if TYPE_CHECKING:
-    from .dynamics import NimAction, NimDynamics
 
 
 @dataclass(frozen=True, slots=True)

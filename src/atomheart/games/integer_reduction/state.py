@@ -1,7 +1,5 @@
 """State objects for the integer reduction game."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 import valanga

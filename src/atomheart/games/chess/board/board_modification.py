@@ -114,7 +114,7 @@ class PieceRustIterator:
         init=False, default=None, repr=False
     )
 
-    def __iter__(self) -> "PieceRustIterator":
+    def __iter__(self) -> PieceRustIterator:
         """Initialize iteration over the stored Rust tuples."""
         self._it = iter(self.items_)
         return self

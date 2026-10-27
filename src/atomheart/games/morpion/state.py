@@ -1,10 +1,8 @@
 """State objects for Morpion Solitaire (5T / 5D)."""
 
-from __future__ import annotations
-
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, cast
 
 import valanga
 
@@ -15,17 +13,9 @@ from .canonical import (
     stable_json_int_hash,
 )
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
 Point = tuple[int, int]
 Dir = tuple[int, int]
 Segment = tuple[Point, Point]
-
-
-def _empty_played_moves() -> frozenset[Move]:
-    """Return an explicitly typed empty move set."""
-    return cast("frozenset[Move]", frozenset())
 
 
 class Variant(StrEnum):
@@ -93,7 +83,7 @@ class MorpionState(valanga.State):
     points: frozenset[Point]
     used_unit_segments: frozenset[Segment]
     dir_usage: Mapping[tuple[Point, int], int]
-    played_moves: frozenset[Move] = field(default_factory=_empty_played_moves)
+    played_moves: frozenset[Move] = field(default_factory=frozenset[Move])
     moves: int = 0
     variant: Variant = Variant.TOUCHING_5T
 
@@ -158,7 +148,7 @@ def initial_state(variant: Variant = Variant.TOUCHING_5T) -> MorpionState:
         points=standard_initial_points_a4(),
         used_unit_segments=frozenset(),
         dir_usage={},
-        played_moves=_empty_played_moves(),
+        played_moves=frozenset[Move](),
         moves=0,
         variant=variant,
     )

@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "atomheart"
 version = "0.2.11"
 description = "Board game environments and Valanga adapters"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
+classifiers = ["Programming Language :: Python :: 3", "Programming Language :: Python :: 3.14"]
 dependencies = [
     "rich",
     "valanga ==0.2.5",
@@ -37,29 +38,29 @@ test = [
 ]
 
 lint = [
-  "ruff>=0.15.20",
-  "pylint>=4.0.6",
+  "ruff==0.15.20",
+  "pylint==4.0.6",
 ]
 
 typecheck = [
-  "mypy>=2.1.0",
-  "pyright[nodejs]>=1.1.411",
+  "mypy==2.1.0",
+  "pyright[nodejs]==1.1.411",
   "types-PyYAML>=6.0.12.20260518",
 ]
 
 dev = [
     # Development dependencies (includes test)
-    "tox>=4.56.1",
+    "tox==4.56.1",
     "types-PyYAML>=6.0.12.20260518",
 
     # Linting & formatting
-    "ruff>=0.15.20",
-    "pylint>=4.0.6",
+    "ruff==0.15.20",
+    "pylint==4.0.6",
     "black>=26.5.1",
 
     # Type checking
-    "mypy>=2.1.0",
-    "pyright[nodejs]>=1.1.411",
+    "mypy==2.1.0",
+    "pyright[nodejs]==1.1.411",
 
     # Building & publishing
     "build",
@@ -86,7 +87,7 @@ testpaths = [
 ]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
@@ -115,19 +116,9 @@ warn_redundant_casts = true
 strict_equality = true
 warn_unused_configs = true
 
-[[tool.mypy.overrides]]
-module = [
-    "PySide6",
-    "PySide6.*"
-]
-ignore_missing_imports = true
-follow_imports = 'skip'
-
-
-
 [tool.ruff]
 line-length = 88
-target-version = "py313"
+target-version = "py314"
 
 # Enable import sorting (alphabetical + group order)
 lint.select = ["I", "F", "E", "B", "TCH","UP","SIM", "RUF","RET","N","A",
@@ -147,13 +138,20 @@ lint.ignore = [ "E501","PLR0913","ANN401",
 [tool.ruff.lint.per-file-ignores]
 # If needed, can add file-specific ignores
 
+# Core API annotations are inspected at runtime; optional Rust factories keep
+# their explicit string annotations and lazy imports.
+[tool.ruff.lint.flake8-type-checking]
+exempt-modules = ["typing", "collections.abc", "valanga", "atomheart", "chess", "shakmaty_python_binding",
+    ".move", ".rules", ".state", ".dynamics", ".canonical",
+    ".board_modification", ".utils", ".imove"]
+runtime-evaluated-decorators = ["dataclasses.dataclass"]
+
 [tool.black]
 line-length = 88
-target-version = ['py313']
+target-version = ['py314']
 
 [tool.pylint]
-py-version = "3.13"
-extension-pkg-whitelist = ["PyQt5", "PySide6"]
+py-version = "3.14"
 
 [tool.pylint.format]
 max-line-length = 88
@@ -173,7 +171,7 @@ disable = [
 
 
 [tool.pyright]
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 typeCheckingMode = "strict"
 reportMissingImports = true
 reportUnusedImport = true
@@ -186,7 +184,7 @@ reportPrivateImportUsage = false
 
 [tool.tox]
 min_version = "4.30.2"
-env_list = ["py313", "lint", "typecheck", "build"]
+env_list = ["py314", "lint", "typecheck", "build"]
 isolated_build = true
 
 [tool.tox.env.build]
@@ -195,9 +193,10 @@ commands = [["python", "-m", "build"]]
 
 
 [tool.tox.env_run_base]
-base_python = ["python3.13"]
+base_python = ["python3.14"]
 
-[tool.tox.env.py313]
+[tool.tox.env.py314]
+deps = ["{env:VALANGA_WHEEL}"]
 extras = ["test", "all"]
 commands = [["pytest", "{posargs}"]]
 
@@ -207,14 +206,14 @@ package = "skip"
 deps = [
   # runtime deps (match [project].dependencies)
   "rich",
-  "valanga==0.2.5",
+  "{env:VALANGA_WHEEL}",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",
 
   # tool deps
-  "ruff>=0.15.20",
-  "pylint>=4.0.6",
+  "ruff==0.15.20",
+  "pylint==4.0.6",
 ]
 set_env = { PYTHONPATH = "{toxinidir}/src" }
 commands = [
@@ -230,14 +229,14 @@ package = "skip"
 deps = [
   # runtime deps
   "rich",
-  "valanga==0.2.5",
+  "{env:VALANGA_WHEEL}",
   "chess",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML",
 
   # tool deps
-  "mypy>=2.1.0",
-  "pyright[nodejs]>=1.1.411",
+  "mypy==2.1.0",
+  "pyright[nodejs]==1.1.411",
   "types-PyYAML>=6.0.12.20260518",
 ]
 set_env = { MYPYPATH = "{toxinidir}/src" }

@@ -1,8 +1,6 @@
 """Geometry tables for 32-square checkers coordinates."""
 # pylint: disable=redefined-outer-name
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 N_ROWS = 8

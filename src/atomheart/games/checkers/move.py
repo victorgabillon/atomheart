@@ -3,15 +3,10 @@
 Pattern B is used: move keys are structural and hashable.
 """
 
-from __future__ import annotations
-
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from valanga import BranchKeyGeneratorP
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 type MoveKey = tuple[int, tuple[int, ...], tuple[int, ...], bool]
 """(start_sq, landings, jumped, promotes).

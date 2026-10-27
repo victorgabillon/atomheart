@@ -1,14 +1,12 @@
 """ReversibleDynamics implementation for checkers."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import valanga
 
 from .apply import validate_move
 from .bitboard import bit
+from .dynamics import CheckersDynamics
 from .move import MoveKey
 from .state import CheckersState
 
@@ -24,10 +22,6 @@ class CheckersUndo:
     promoted: bool
     captured: tuple[tuple[int, bool], ...]
     prev_ply: int
-
-
-if TYPE_CHECKING:
-    from .dynamics import CheckersDynamics
 
 
 class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUndo]):

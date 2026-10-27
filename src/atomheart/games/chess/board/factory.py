@@ -11,6 +11,7 @@ import chess
 
 from .board_chi import BoardChi, LegalMoveKeyGenerator
 from .iboard import BoardKey, IBoard, compute_key
+from .utils import Fen, FenPlusHistory
 
 _HAS_SHAKMATY_BINDING = find_spec("shakmaty_python_binding") is not None
 
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
     import shakmaty_python_binding  # only for type annotations
 
     from .rusty_board import LegalMoveKeyGeneratorRust, RustyBoardChi
-    from .utils import Fen, FenPlusHistory
 
 
 class BoardFactory(Protocol):

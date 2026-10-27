@@ -1,10 +1,6 @@
 """Move application and validation for checkers states."""
 # pylint: disable=duplicate-code
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 import valanga
 
 from .bitboard import bit, iter_bits
@@ -16,11 +12,9 @@ from .geometry import (
     STEP_TABLES,
     WHITE_FORWARD_DIRECTIONS,
 )
+from .move import MoveKey
+from .rules import CheckersRules
 from .state import CheckersState
-
-if TYPE_CHECKING:
-    from .move import MoveKey
-    from .rules import CheckersRules
 
 
 def _dirs_for_piece(is_king: bool, turn: valanga.Color) -> tuple[str, ...]:

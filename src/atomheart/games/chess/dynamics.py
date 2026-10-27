@@ -2,14 +2,14 @@
 
 from typing import TYPE_CHECKING, cast
 
+import chess
 import valanga
+
+from atomheart.games.chess.board.iboard import IBoard
 
 from .state import ChessState
 
 if TYPE_CHECKING:
-    import chess
-
-    from atomheart.games.chess.board.iboard import IBoard
     from atomheart.games.chess.move.imove import MoveKey
 
 
@@ -17,7 +17,7 @@ class UnsupportedTerminalChessResultError(ValueError):
     """Raised when a terminal chess board reports an unknown result string."""
 
     @classmethod
-    def for_result(cls, result: str) -> "UnsupportedTerminalChessResultError":
+    def for_result(cls, result: str) -> UnsupportedTerminalChessResultError:
         """Build an error for an unsupported terminal result."""
         return cls(f"Unsupported terminal chess result: {result!r}")
 
@@ -66,7 +66,7 @@ class ChessDynamics(valanga.Dynamics[ChessState]):
         return state.board.get_move_key_from_uci(name)
 
 
-def _over_event_from_board(board: "IBoard") -> valanga.OverEvent[valanga.Role]:
+def _over_event_from_board(board: IBoard) -> valanga.OverEvent[valanga.Role]:
     """Convert board end-of-game info into a Valanga over event."""
     result = board.result(claim_draw=True)
     termination: chess.Termination | None = board.termination()

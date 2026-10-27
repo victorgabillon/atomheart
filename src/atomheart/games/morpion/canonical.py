@@ -1,13 +1,8 @@
 """Canonical move-set utilities for Morpion Solitaire."""
 
-from __future__ import annotations
-
 import hashlib
 import json
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 Point = tuple[int, int]
 Move = tuple[int, int, int, int]

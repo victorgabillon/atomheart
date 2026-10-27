@@ -7,14 +7,15 @@ from typing import TYPE_CHECKING, Protocol
 
 import chess
 
+from atomheart.games.chess.board.iboard import IBoard
+
+from .imove import IMove
+from .utils import MoveUci
+
 if TYPE_CHECKING:
     import shakmaty_python_binding
 
-    from atomheart.games.chess.board.iboard import IBoard
     from atomheart.games.chess.board.rusty_board import RustyBoardChi
-
-    from .imove import IMove
-    from .utils import MoveUci
 
 
 class MoveFactory(Protocol):

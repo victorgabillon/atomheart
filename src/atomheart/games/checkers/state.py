@@ -1,16 +1,13 @@
 """State objects for the checkers game implementation."""
 
-from __future__ import annotations
-
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeAlias
 
 import valanga
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     _ColorTurnState: TypeAlias = valanga.TurnState[valanga.Color]  # noqa: UP040
 else:
     _ColorTurnState = object

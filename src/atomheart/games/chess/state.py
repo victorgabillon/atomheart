@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, TypeAlias
 
 import valanga
 
-if TYPE_CHECKING:
-    from atomheart.games.chess.board.iboard import IBoard
+from atomheart.games.chess.board.iboard import IBoard
 
+if TYPE_CHECKING:
     _ColorTurnState: TypeAlias = valanga.TurnState[valanga.Color]  # noqa: UP040
 else:
     _ColorTurnState = object

@@ -2,16 +2,9 @@
 
 # pylint: disable=invalid-name
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, TypeVar
+from collections.abc import Iterator, Sequence
 
 import valanga
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
-
-TBranchKey_co = TypeVar("TBranchKey_co", covariant=True)
 
 
 class TupleBranchKeyGen[TBranchKey_co](

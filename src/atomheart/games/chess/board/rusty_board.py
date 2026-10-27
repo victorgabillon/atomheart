@@ -106,7 +106,7 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
         self.it = iter(range(self.number_moves))
         self.all_generated_keys_ = list(range(self.number_moves))
 
-    def copy_with_reset(self) -> "LegalMoveKeyGeneratorRust":
+    def copy_with_reset(self) -> LegalMoveKeyGeneratorRust:
         """Create a copy of the legal move generator with reset state."""
         return LegalMoveKeyGeneratorRust(
             chess_rust_binding=self.chess_rust_binding,
@@ -148,7 +148,7 @@ class LegalMoveKeyGeneratorRust(LegalMoveKeyGeneratorP):
 
     def copy(
         self, copied_chess_rust_binding: shakmaty_python_binding.MyChess | None = None
-    ) -> "LegalMoveKeyGeneratorRust":
+    ) -> LegalMoveKeyGeneratorRust:
         """Create a copy of the legal move generator.
 
         Args:
