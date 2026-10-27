@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "atomheart"
-version = "0.2.11"
+version = "0.3.0"
 description = "Board game environments and Valanga adapters"
 readme = "README.md"
 license = "GPL-3.0-only"
@@ -13,7 +13,7 @@ requires-python = ">=3.14"
 classifiers = ["Programming Language :: Python :: 3", "Programming Language :: Python :: 3.14"]
 dependencies = [
     "rich>=15.0.0",
-    "valanga==0.2.5",
+    "valanga==0.3.0",
     "PyYAML>=6.0.3",
 ]
 
@@ -199,7 +199,7 @@ commands = [["python", "-m", "build"]]
 base_python = ["python3.14"]
 
 [tool.tox.env.py314]
-deps = ["{env:VALANGA_WHEEL}"]
+deps = ["valanga==0.3.0"]
 extras = ["test", "all"]
 commands = [["pytest", "{posargs}"]]
 
@@ -209,7 +209,7 @@ package = "skip"
 deps = [
   # runtime deps (match [project].dependencies)
   "rich>=15.0.0",
-  "{env:VALANGA_WHEEL}",
+  "valanga==0.3.0",
   "chess>=1.11.2",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML>=6.0.3",
@@ -232,7 +232,7 @@ package = "skip"
 deps = [
   # runtime deps
   "rich>=15.0.0",
-  "{env:VALANGA_WHEEL}",
+  "valanga==0.3.0",
   "chess>=1.11.2",
   "shakmaty_python_binding>=0.1.5",
   "PyYAML>=6.0.3",

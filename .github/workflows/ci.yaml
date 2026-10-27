@@ -27,19 +27,6 @@ jobs:
         python -m pip install --upgrade pip==26.2.2
         pip install tox==4.67.2
 
-    - name: Check out the validated Valanga source
-      uses: actions/checkout@v7.0.1
-      with:
-        repository: victorgabillon/valanga
-        ref: 1036202ca15432de6cfb8da2c7a3cdf99f12be49
-        path: .ci-valanga
-
-    - name: Build the Python 3.14 Valanga wheel
-      run: |
-        python -m pip install build==1.6.1
-        python -m build --wheel --outdir "$RUNNER_TEMP/valanga-dist" .ci-valanga
-        echo "VALANGA_WHEEL=$RUNNER_TEMP/valanga-dist/valanga-0.2.5-py3-none-any.whl" >> "$GITHUB_ENV"
-
     - name: Run tox
       run: tox
 

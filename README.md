@@ -2,6 +2,13 @@
 
 A Python chess library providing a unified interface for chess board operations and move handling.
 
+## Release 0.3.0
+
+This release requires Python 3.14 and the published `valanga==0.3.0`. It preserves
+the validated Morpion rules, canonical identities, checkpoints, and core game
+behavior, with precise generic state and undo-token contracts. The base package
+remains installable without either optional chess backend.
+
 ## Features
 
 - Chess board representation and manipulation
@@ -26,10 +33,10 @@ See the repos
 ## Installation
 
 ```bash
-pip install atomheart
-pip install atomheart[chess]
-pip install atomheart[chess-rust]
-pip install atomheart[all]
+pip install atomheart==0.3.0
+pip install 'atomheart[chess]==0.3.0'
+pip install 'atomheart[chess-rust]==0.3.0'
+pip install 'atomheart[all]==0.3.0'
 ```
 
 The base install keeps the lightweight core games available. Chess support is
@@ -56,11 +63,9 @@ board_modification = board.play_move_key(move_key)
 
 ```bash
 uv venv --python 3.14
-# Install the migrated Valanga wheel before resolving Atomheart.
-uv pip install /path/to/valanga-0.2.5-py3-none-any.whl
 uv pip install -e '.[test,dev,all]'
 source .venv/bin/activate
-VALANGA_WHEEL=/path/to/valanga-0.2.5-py3-none-any.whl tox
+tox
 ```
 
 Core annotations use Python 3.14 deferred evaluation with runtime imports needed
@@ -77,6 +82,7 @@ checkpoint payloads and stable hashing are unchanged.
 on Linux; its published binary wheel targets CPython 3.11. The complete chess
 suite must be run against the actual compiled binding.
 
-Tox requires `VALANGA_WHEEL` so tests, lint and typing cannot silently resolve a
-published Valanga wheel. CI builds that wheel from the pinned Valanga migration
-commit; push the Valanga commit before running the Atomheart workflow remotely.
+Tests, lint, and typing install `valanga==0.3.0` from PyPI. CI and release
+workflows use the same published dependency through tox. The optional Rust
+binding has no established published CPython 3.14 wheel; a local source build
+was validated on Linux, and availability on other platforms is not guaranteed.
