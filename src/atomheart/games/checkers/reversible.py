@@ -24,7 +24,9 @@ class CheckersUndo:
     prev_ply: int
 
 
-class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUndo]):
+class CheckersReversibleDynamics(
+    valanga.ReversibleDynamics[CheckersState, CheckersUndo]
+):
     """In-place reversible dynamics for checkers search."""
 
     dynamics: CheckersDynamics
@@ -45,8 +47,8 @@ class CheckersReversibleDynamics(valanga.ReversibleDynamics[MoveKey, CheckersUnd
         self._turn = state.turn
         self._ply = state.ply_since_capture_or_man_move
 
-    @property  # type: ignore[override]
-    def state(self) -> CheckersState:  # pyright: ignore[reportIncompatibleMethodOverride]
+    @property
+    def state(self) -> CheckersState:
         """Build immutable state snapshot from current mutable bitboards."""
         return CheckersState(
             wm=self._wm,

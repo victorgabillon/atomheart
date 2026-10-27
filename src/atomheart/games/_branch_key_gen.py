@@ -2,12 +2,12 @@
 
 # pylint: disable=invalid-name
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Hashable, Iterator, Sequence
 
 import valanga
 
 
-class TupleBranchKeyGen[TBranchKey_co](
+class TupleBranchKeyGen[TBranchKey_co: Hashable](
     valanga.BranchKeyGeneratorP[TBranchKey_co],
 ):
     """Small resettable in-memory branch-key generator."""

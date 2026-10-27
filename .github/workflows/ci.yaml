@@ -12,25 +12,27 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.14"]
+        check-latest: true
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: ${{ matrix.python-version }}
+        check-latest: true
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install tox==4.56.1
+        python -m pip install --upgrade pip==26.2.2
+        pip install tox==4.67.2
 
     - name: Check out the validated Valanga source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
       with:
         repository: victorgabillon/valanga
-        ref: 2685ed9e79236ad707e2657f87f0ddc53953e4c7
+        ref: 0ddbdcb36b7c9968bae9679e3362611e06cbe88d
         path: .ci-valanga
 
     - name: Build the Python 3.14 Valanga wheel

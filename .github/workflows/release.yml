@@ -9,19 +9,20 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.14"
+          check-latest: true
           cache: pip
 
-      - run: python -m pip install -U pip tox==4.56.1
+      - run: python -m pip install -U pip==26.2.2 tox==4.67.2
       - name: Check out the validated Valanga source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           repository: victorgabillon/valanga
-          ref: 2685ed9e79236ad707e2657f87f0ddc53953e4c7
+          ref: 0ddbdcb36b7c9968bae9679e3362611e06cbe88d
           path: .ci-valanga
 
       - name: Build the Python 3.14 Valanga wheel
@@ -44,18 +45,19 @@ jobs:
       name: pypi
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.14"
+          check-latest: true
 
       - name: Build
         run: |
-          python -m pip install -U pip build
+          python -m pip install -U pip==26.2.2 build==1.6.1
           python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.14.3
         with:
           packages-dir: dist/
