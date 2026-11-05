@@ -345,10 +345,13 @@ def _missing_index_for_candidate(
     pts5: tuple[Point, Point, Point, Point, Point],
 ) -> int | None:
     """Return missing index when exactly one point is absent, else ``None``."""
-    missing = [index for index, point in enumerate(pts5) if point not in points]
-    if len(missing) != 1:
-        return None
-    return missing[0]
+    missing = None
+    for index, point in enumerate(pts5):
+        if point not in points:
+            if missing is not None:
+                return None
+            missing = index
+    return missing
 
 
 @dataclass(slots=True)
