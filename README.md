@@ -2,6 +2,12 @@
 
 A Python chess library providing a unified interface for chess board operations and move handling.
 
+## Release 0.3.1
+
+Morpion candidate occupancy now stops after the second missing point. Ordered
+legal actions, symmetry orbits, terminality, successors, and the Valanga 0.3.0
+dependency remain unchanged.
+
 ## Release 0.3.0
 
 This release requires Python 3.14 and the published `valanga==0.3.0`. It preserves
@@ -33,10 +39,10 @@ See the repos
 ## Installation
 
 ```bash
-pip install atomheart==0.3.0
-pip install 'atomheart[chess]==0.3.0'
-pip install 'atomheart[chess-rust]==0.3.0'
-pip install 'atomheart[all]==0.3.0'
+pip install atomheart==0.3.1
+pip install 'atomheart[chess]==0.3.1'
+pip install 'atomheart[chess-rust]==0.3.1'
+pip install 'atomheart[all]==0.3.1'
 ```
 
 The base install keeps the lightweight core games available. Chess support is
